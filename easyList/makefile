@@ -5,7 +5,6 @@ LDLIBS = -pthread -lbpf -lm
 
 all: easylist bpf
 
-
 easylist: easylist.c easylist.h db_types.h helpers.o range.o parse.o create.o get.o
 
 helpers.o: helpers.c helpers.h db_types.h
