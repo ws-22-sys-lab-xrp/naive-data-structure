@@ -13,26 +13,32 @@
 
 char LICENSE[] SEC("license") = "GPL";
 
-static __inline int key_exists(unsigned long const key, Node *node) {
+static __inline int key_exists(unsigned long const key, Node *node)
+{
     /* Safety: NULL is never passed for node, but mr. verifier doesn't know that */
     dbg_print("simplekv-bpf: key_exists entered\n");
     if (node == NULL)
         return -1;
-    for (int i = 0; i < NODE_CAPACITY; ++i) {
-        if (node->key[i] == key) {
+    for (int i = 0; i < NODE_CAPACITY; ++i)
+    {
+        if (node->key[i] == key)
+        {
             return 1;
         }
     }
     return 0;
 }
 
-static __inline ptr__t nxt_node(unsigned long key, Node *node) {
+static __inline ptr__t nxt_node(unsigned long key, Node *node)
+{
     /* Safety: NULL is never passed for node, but mr. verifier doesn't know that */
     dbg_print("simplekv-bpf: nxt_node entered\n");
     if (node == NULL)
         return -1;
-    for (int i = 1; i < NODE_CAPACITY; ++i) {
-        if (key < node->key[i]) {
+    for (int i = 1; i < NODE_CAPACITY; ++i)
+    {
+        if (key < node->key[i])
+        {
             return node->ptr[i - 1];
         }
     }
@@ -43,14 +49,18 @@ static __inline ptr__t nxt_node(unsigned long key, Node *node) {
 /* State flags */
 #define AT_VALUE 1
 
-static __inline void set_context_next_index(struct bpf_xrp *context, struct ScatterGatherQuery *query) {
+static __inline void set_context_next_index(struct bpf_xrp *context, struct ScatterGatherQuery *query)
+{
     query->current_index += 1;
     query->state_flags = 0;
-    if (query->current_index >= query->n_keys || query->current_index >= SG_KEYS) {
+    if (query->current_index >= query->n_keys || query->current_index >= SG_KEYS)
+    {
         context->done = 1;
         context->next_addr[0] = 0;
         context->size[0] = 0;
-    } else {
+    }
+    else
+    {
         context->next_addr[0] = query->root_pointer;
         context->size[0] = BLK_SIZE;
     }
@@ -60,9 +70,10 @@ static __inline void set_context_next_index(struct bpf_xrp *context, struct Scat
 #define EBPF_CONTEXT_MASK SG_KEYS - 1
 
 SEC("oliver_agg")
-unsigned int oliver_agg_func(struct bpf_xrp *context) {
-    struct ScatterGatherQuery *query = (struct ScatterGatherQuery*) context->scratch;
-    Node *node = (Node *) context->data;
+unsigned int oliver_agg_func(struct bpf_xrp *context)
+{
+    struct ScatterGatherQuery *query = (struct ScatterGatherQuery *)context->scratch;
+    Node *node = (Node *)context->data;
     int *curr_idx = &query->current_index;
 
     /* Three cases:
@@ -81,7 +92,8 @@ unsigned int oliver_agg_func(struct bpf_xrp *context) {
 
     /* Case 1: read value into query result */
     dbg_print("simplekv-bpf: entered\n");
-    if (query->state_flags & AT_VALUE) {
+    if (query->state_flags & AT_VALUE)
+    {
         dbg_print("simplekv-bpf: case 1 - value found\n");
 
         ptr__t offset = query->value_ptr & (BLK_SIZE - 1);
@@ -94,11 +106,13 @@ unsigned int oliver_agg_func(struct bpf_xrp *context) {
     }
 
     /* Case 2: verify key & submit read for block containing value */
-    if (node->type == LEAF) {
+    if (node->type == LEAF)
+    {
         dbg_print("simplekv-bpf: case 2 - verify key & get last block\n");
 
         query->state_flags = REACHED_LEAF;
-        if (!key_exists(query->keys[*curr_idx & EBPF_CONTEXT_MASK], node)) {
+        if (!key_exists(query->keys[*curr_idx & EBPF_CONTEXT_MASK], node))
+        {
             dbg_print("simplekv-bpf: key doesn't exist\n");
 
             /* Skip this key */
