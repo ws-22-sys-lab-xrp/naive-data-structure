@@ -29,15 +29,15 @@ static void print_query_results(struct RangeQuery *query)
     }
     else if (query->agg_op == AGG_SUM)
     {
-        fprintf(stdout, "%ld\n", query->agg_value);
+        fprintf("SUM: ", stdout, "%ld\n", query->agg_value);
     }
     else if (query->agg_op == AGG_MAX)
     {
-        fprintf(stdout, "%f\n", query->agg_value);
+        fprintf("MAX ", stdout, "%f\n", query->agg_value);
     }
     else if (query->agg_op == AGG_AVG)
     {
-        fprintf(stdout, "%f\n", query->agg_value / query->len);
+        fprintf("AVG ", stdout, "%f\n", query->agg_value / query->len);
     }
 }
 
