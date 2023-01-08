@@ -6,6 +6,7 @@
 #include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
 #include "simplekvspec.h"
+#include <math.h>
 
 #ifndef NULL
 #define NULL 0
@@ -16,12 +17,15 @@
 
 char LICENSE[] SEC("license") = "GPL";
 
-static __inline ptr__t nxt_node(unsigned long key, Node *node) {
+static __inline ptr__t nxt_node(unsigned long key, Node *node)
+{
     /* Safety: NULL is never passed for node, but mr. verifier doesn't know that */
     if (node == NULL)
         return -1;
-    for (int i = 1; i < NODE_CAPACITY; ++i) {
-        if (key < node->key[i]) {
+    for (int i = 1; i < NODE_CAPACITY; ++i)
+    {
+        if (key < node->key[i])
+        {
             return node->ptr[i - 1];
         }
     }
@@ -29,24 +33,29 @@ static __inline ptr__t nxt_node(unsigned long key, Node *node) {
     return node->ptr[NODE_CAPACITY - 1];
 }
 
-static __inline unsigned int process_leaf(struct bpf_xrp *context, struct RangeQuery *query, Node *node) {
+static __inline unsigned int process_leaf(struct bpf_xrp *context, struct RangeQuery *query, Node *node)
+{
     key__t first_key = query->flags & RNG_BEGIN_EXCLUSIVE ? query->range_begin + 1 : query->range_begin;
     unsigned int end_inclusive = query->flags & RNG_END_INCLUSIVE;
-    
+
     /* Iterate over keys in leaf node */
     unsigned int *i = &query->_node_key_ix;
-    for(;;) {
+    for (;;)
+    {
         /* Iterate over keys in leaf node */
-        for (; *i < NODE_CAPACITY && query->len < RNG_KEYS; ++(*i)) {
+        for (; *i < NODE_CAPACITY && query->len < RNG_KEYS; ++(*i))
+        {
             key__t curr_key = node->key[*i & KEY_MASK];
-            if (curr_key > query->range_end || (curr_key == query->range_end && !end_inclusive)) {
+            if (curr_key > query->range_end || (curr_key == query->range_end && !end_inclusive))
+            {
                 /* All done; set state and return 0 */
                 mark_range_query_complete(query);
                 context->done = 1;
                 return 0;
             }
             /* Retrieve value for this key */
-            if (curr_key >= first_key) {
+            if (curr_key >= first_key)
+            {
                 /* Set up the next resubmit to read the value */
                 context->next_addr[0] = value_base(decode(node->ptr[*i & KEY_MASK]));
                 context->size[0] = BLK_SIZE;
@@ -66,28 +75,35 @@ static __inline unsigned int process_leaf(struct bpf_xrp *context, struct RangeQ
         /* Three conditions: Either the query buff is full, or we inspected all keys, or both */
 
         /* Check end condition of outer loop */
-        if (query->len == RNG_KEYS) {
+        if (query->len == RNG_KEYS)
+        {
             /* Query buffer is full; need to suspend and return */
             context->done = 1;
             query->range_begin = query->kv[(query->len - 1) & KEY_MASK].key;
             query->flags |= RNG_BEGIN_EXCLUSIVE;
-            if (*i < NODE_CAPACITY) {
+            if (*i < NODE_CAPACITY)
+            {
                 /* This node still has values we should inspect */
                 return 0;
             }
 
             /* Need to look at next node */
-            if (node->next == 0) {
+            if (node->next == 0)
+            {
                 /* No next node, so we're done */
                 mark_range_query_complete(query);
-            } else {
+            }
+            else
+            {
                 query->_resume_from_leaf = node->next;
                 query->_node_key_ix = 0;
                 query->_state = RNG_READ_NODE;
             }
             /* Return to user since we marked context->done = 1 at the top of this if block */
             return 0;
-        } else if (node->next == 0) {
+        }
+        else if (node->next == 0)
+        {
             /* Still have room in query buf, but we've read the entire index */
             mark_range_query_complete(query);
             context->done = 1;
@@ -107,16 +123,28 @@ static __inline unsigned int process_leaf(struct bpf_xrp *context, struct RangeQ
     }
 }
 
-static __inline unsigned int process_value(struct bpf_xrp *context, struct RangeQuery *query) {
+static __inline unsigned int process_value(struct bpf_xrp *context, struct RangeQuery *query)
+{
     unsigned int *i = &query->_node_key_ix;
     unsigned long offset = value_offset(decode(query->_current_node.ptr[*i & KEY_MASK]));
 
-    if (query->agg_op == AGG_NONE) {
+    if (query->agg_op == AGG_NONE)
+    {
         memcpy(query->kv[query->len & KEY_MASK].value, context->data + offset, sizeof(val__t));
         query->len += 1;
     }
-    else if (query->agg_op == AGG_SUM) {
-        query->agg_value += *(long *) (context->data + offset);
+    else if (query->agg_op == AGG_SUM)
+    {
+        query->agg_value += *(long *)(context->data + offset);
+    }
+    else if (query->agg_op == AGG_MAX)
+    {
+        query->agg_value = max(query->agg_value, *(long *)(context->data + offset));
+    }
+    else if (query->agg_op == AGG_AVG)
+    {
+        query->agg_value += *(long *)(context->data + offset);
+        query->len += 1;
     }
 
     /* TODO: This should be incremented, but not doing so does not affect correctness.
@@ -130,8 +158,10 @@ static __inline unsigned int process_value(struct bpf_xrp *context, struct Range
     return process_leaf(context, query, &query->_current_node);
 }
 
-static __inline unsigned int traverse_index(struct bpf_xrp *context, struct RangeQuery *query, Node *node) {
-    if (node->type == LEAF) {
+static __inline unsigned int traverse_index(struct bpf_xrp *context, struct RangeQuery *query, Node *node)
+{
+    if (node->type == LEAF)
+    {
         query->_current_node = *node;
         return process_leaf(context, query, node);
     }
@@ -143,23 +173,25 @@ static __inline unsigned int traverse_index(struct bpf_xrp *context, struct Rang
 }
 
 SEC("oliver_range")
-unsigned int oliver_range_func(struct bpf_xrp *context) {
-    struct RangeQuery *query = (struct RangeQuery*) context->scratch;
-    Node *node = (Node *) context->data;
+unsigned int oliver_range_func(struct bpf_xrp *context)
+{
+    struct RangeQuery *query = (struct RangeQuery *)context->scratch;
+    Node *node = (Node *)context->data;
 
-    switch (query->_state) {
-        case RNG_TRAVERSE:
-            return traverse_index(context, query, node);
-        case RNG_READ_NODE:
-            query->_current_node = *node;
-            query->_state = RNG_RESUME;
-            /* FALL THROUGH */
-        case RNG_RESUME:
-            return process_leaf(context, query, node);
-        case RNG_READ_VALUE:
-            return process_value(context, query);
-        default:
-            context->done = 1;
-            return -1;
+    switch (query->_state)
+    {
+    case RNG_TRAVERSE:
+        return traverse_index(context, query, node);
+    case RNG_READ_NODE:
+        query->_current_node = *node;
+        query->_state = RNG_RESUME;
+        /* FALL THROUGH */
+    case RNG_RESUME:
+        return process_leaf(context, query, node);
+    case RNG_READ_VALUE:
+        return process_value(context, query);
+    default:
+        context->done = 1;
+        return -1;
     }
 }
