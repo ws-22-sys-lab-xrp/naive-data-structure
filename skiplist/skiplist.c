@@ -1,199 +1,304 @@
-/* Skip Lists: A Probabilistic Alternative to Balanced Trees */
-
-#include <stdlib.h>
 #include <stdio.h>
-#include <limits.h>
-#include "create.h"
+#include <sys/fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
+#include <string.h>
 
-#define SKIPLIST_MAX_LEVEL 6
+#define MAX_LEVEL 16
 
-typedef struct snode
+// Structure for a skip list node
+typedef struct Node
 {
     int key;
     int value;
-    struct snode **forward;
-} snode;
-
-typedef struct skiplist
-{
     int level;
-    int size;
-    struct snode *header;
-} skiplist;
+    struct Node *next[MAX_LEVEL];
+    struct Node *prev[MAX_LEVEL];
+} Node;
 
-skiplist *skiplist_init(skiplist *list)
+// Structure for the skip list
+typedef struct SkipList
 {
-    int i;
-    snode *header = (snode *)malloc(sizeof(struct snode));
-    list->header = header;
-    header->key = INT_MAX;
-    header->forward = (snode **)malloc(
-        sizeof(snode *) * (SKIPLIST_MAX_LEVEL + 1));
-    for (i = 0; i <= SKIPLIST_MAX_LEVEL; i++)
-    {
-        header->forward[i] = list->header;
-    }
+    Node *head;
+    Node *tail;
+    int max_level;
+    int size;
+} SkipList;
 
-    list->level = 1;
+// Function prototypes
+SkipList *create_skiplist();
+void insert_node(SkipList *list, int key, int value);
+void delete_node(SkipList *list, int key);
+void print_skiplist(SkipList *list);
+void save_skiplist(SkipList *list, char *filename);
+SkipList *load_skiplist(char *filename);
+
+// Create a new skip list
+SkipList *create_skiplist()
+{
+    SkipList *list = malloc(sizeof(SkipList));
+    list->head = malloc(sizeof(Node));
+    list->tail = malloc(sizeof(Node));
+    list->max_level = 0;
     list->size = 0;
+
+    for (int i = 0; i < MAX_LEVEL; i++)
+    {
+        list->head->next[i] = list->tail;
+        list->tail->prev[i] = list->head;
+    }
 
     return list;
 }
 
-static int rand_level()
+// Insert a new node into the skip list
+void insert_node(SkipList *list, int key, int value)
 {
-    int level = 1;
-    while (rand() < RAND_MAX / 2 && level < SKIPLIST_MAX_LEVEL)
-        level++;
-    return level;
-}
+    Node *new_node = malloc(sizeof(Node));
+    new_node->key = key;
+    new_node->value = value;
+    new_node->level = 0;
 
-int skiplist_insert(skiplist *list, int key, int value)
-{
-    snode *update[SKIPLIST_MAX_LEVEL + 1];
-    snode *x = list->header;
-    int i, level;
-    for (i = list->level; i >= 1; i--)
+    Node *curr = list->head;
+    for (int i = list->max_level; i >= 0; i--)
     {
-        while (x->forward[i]->key < key)
-            x = x->forward[i];
-        update[i] = x;
-    }
-    x = x->forward[1];
-
-    if (key == x->key)
-    {
-        x->value = value;
-        return 0;
-    }
-    else
-    {
-        level = rand_level();
-        if (level > list->level)
+        while (curr->next[i] != list->tail && curr->next[i]->key < key)
         {
-            for (i = list->level + 1; i <= level; i++)
+            curr = curr->next[i];
+        }
+        new_node->next[i] = curr->next[i];
+        new_node->prev[i] = curr;
+        curr->next[i]->prev[i] = new_node;
+        curr->next[i] = new_node;
+    }
+
+    list->size++;
+}
+void delete_node(SkipList *list, int key)
+{
+    Node *curr = list->head;
+    Node *update[MAX_LEVEL + 1];
+    memset(update, 0, sizeof(Node *) * (MAX_LEVEL + 1));
+
+    for (int i = list->max_level; i >= 0; i--)
+    {
+        while (curr->next[i] != list->tail && curr->next[i]->key < key)
+        {
+            curr = curr->next[i];
+        }
+        update[i] = curr;
+    }
+
+    curr = curr->next[0];
+    if (curr != list->tail && curr->key == key)
+    {
+        for (int i = 0; i <= list->max_level; i++)
+        {
+            if (update[i]->next[i] != curr)
             {
-                update[i] = list->header;
+                break;
             }
-            list->level = level;
+            update[i]->next[i] = curr->next[i];
         }
+        free(curr);
 
-        x = (snode *)malloc(sizeof(snode));
-        x->key = key;
-        x->value = value;
-        x->forward = (snode **)malloc(sizeof(snode *) * (level + 1));
-        for (i = 1; i <= level; i++)
+        // Update the max level
+        while (list->max_level > 0 && list->head->next[list->max_level] == list->tail)
         {
-            x->forward[i] = update[i]->forward[i];
-            update[i]->forward[i] = x;
+            list->max_level--;
         }
     }
-    return 0;
 }
-
-snode *skiplist_search(skiplist *list, int key)
+// Function to search for a specific node in the skip list
+Node *search_node(SkipList *list, int key)
 {
-    snode *x = list->header;
-    int i;
-    for (i = list->level; i >= 1; i--)
+    Node *curr = list->head;
+    for (int i = list->max_level; i >= 0; i--)
     {
-        while (x->forward[i]->key < key)
-            x = x->forward[i];
+        while (curr->next[i] != list->tail && curr->next[i]->key < key)
+        {
+            curr = curr->next[i];
+        }
+        if (curr->next[i]->key == key)
+        {
+            // Key found, return the node
+            return curr->next[i];
+        }
     }
-    if (x->forward[1]->key == key)
-    {
-        return x->forward[1];
-    }
-    else
-    {
-        return NULL;
-    }
+
+    // Key not found
     return NULL;
 }
 
-static void skiplist_node_free(snode *x)
+// Function to save the skip list to a file
+void save_skiplist(SkipList *list, char *filename)
 {
-    if (x)
+    // Open the file for writing
+    int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd == -1)
     {
-        free(x->forward);
-        free(x);
+        perror("Error opening file");
+        exit(1);
+    }
+
+    // Write the skip list structure to the file
+    pwrite(fd, list, sizeof(SkipList), 0);
+
+    // Write the nodes to the file
+    Node *curr = list->head;
+    for (int i = 0; i <= list->max_level; i++)
+    {
+        pwrite(fd, curr->next[i], sizeof(Node),
+               sizeof(SkipList) + i * sizeof(Node));
+        curr = curr->next[i];
+    }
+
+    close(fd);
+}
+
+// Function to load the skip list from a file
+SkipList *load_skiplist(char *filename)
+{
+    // Open the file for reading
+    int fd = open(filename, O_RDONLY);
+    if (fd == -1)
+    {
+        perror("Error opening file");
+        exit(1);
+    }
+
+    // Read the skip list structure from the file
+    SkipList *list = malloc(sizeof(SkipList));
+    pread(fd, list, sizeof(SkipList), 0);
+
+    // Read the nodes from the file
+    Node *curr = list->head;
+    for (int i = 0; i <= list->max_level; i++)
+    {
+        pread(fd, curr->next[i], sizeof(Node),
+              sizeof(SkipList) + i * sizeof(Node));
+        curr = curr->next[i];
+    }
+
+    close(fd);
+    return list;
+}
+
+void print_skiplist(SkipList *list)
+{
+    Node *curr = list->head->next[0];
+    while (curr != list->tail)
+    {
+        printf("Key: %d, Value: %d\n", curr->key, curr->value);
+        curr = curr->next[0];
     }
 }
 
-int skiplist_delete(skiplist *list, int key)
+// Function to read the elements of the skip list from a file
+void read_skiplist(char *filename)
 {
-    int i;
-    snode *update[SKIPLIST_MAX_LEVEL + 1];
-    snode *x = list->header;
-    for (i = list->level; i >= 1; i--)
+    // Open the file for reading
+    FILE *fp = fopen(filename, "rb");
+    if (!fp)
     {
-        while (x->forward[i]->key < key)
-            x = x->forward[i];
-        update[i] = x;
+        fprintf(stderr, "Error opening file\n");
+        exit(1);
     }
 
-    x = x->forward[1];
-    if (x->key == key)
+    // Read the skip list structure from the file
+    SkipList *list = malloc(sizeof(SkipList));
+    fread(list, sizeof(SkipList), 1, fp);
+
+    // Read the nodes from the file and print their keys and values
+    for (int i = 0; i < list->size; i++)
     {
-        for (i = 1; i <= list->level; i++)
+        Node *node = malloc(sizeof(Node));
+        fread(node, sizeof(Node), 1, fp);
+        printf("Key: %d, Value: %d\n", node->key, node->value);
+    }
+
+    fclose(fp);
+}
+
+// Function to search for a specific element in the skip list
+int search_skiplist_fread(char *filename, int key)
+{
+    // Open the file for reading
+    FILE *fp = fopen(filename, "rb");
+    if (!fp)
+    {
+        fprintf(stderr, "Error opening file\n");
+        exit(1);
+    }
+
+    // Read the skip list structure from the file
+    SkipList *list = malloc(sizeof(SkipList));
+    fread(list, sizeof(SkipList), 1, fp);
+
+    // Search for the key in the skip list
+    Node *curr = list->head;
+    for (int i = list->max_level; i >= 0; i--)
+    {
+        // Read the next node from the file
+        fread(curr->next[i], sizeof(Node), 1, fp);
+        while (curr->next[i] != list->tail && curr->next[i]->key < key)
         {
-            if (update[i]->forward[i] != x)
-                break;
-            update[i]->forward[1] = x->forward[i];
+            // Move to the next node
+            curr = curr->next[i];
+            // Read the next node from the file
+            fread(curr->next[i], sizeof(Node), 1, fp);
         }
-        skiplist_node_free(x);
-
-        while (list->level > 1 && list->header->forward[list->level] == list->header)
-            list->level--;
-        return 0;
+        if (curr->next[i]->key == key)
+        {
+            // Key found, return the value
+            int value = curr->next[i]->value;
+            fclose(fp);
+            return value;
+        }
     }
-    return 1;
-}
 
-static void skiplist_dump(skiplist *list)
-{
-    snode *x = list->header;
-    while (x && x->forward[1] != list->header)
-    {
-        printf("%d[%d]->", x->forward[1]->key, x->forward[1]->value);
-        x = x->forward[1];
-    }
-    printf("NIL\n");
+    // Key not found
+    fclose(fp);
+    return -1;
 }
 
 int main()
 {
-    int arr[] = {3, 6, 9, 2, 11, 1, 4}, i;
-    skiplist list;
-    skiplist_init(&list);
+    int num = 1000;
+    int result;
+    char *filename = "skiplist.dat";
+    // Create and populate the skip list
+    SkipList *list = create_skiplist();
 
-    printf("Insert:--------------------\n");
-    for (i = 0; i < sizeof(arr) / sizeof(arr[0]); i++)
+    for (int i = 0; i < num; i++)
     {
-        skiplist_insert(&list, arr[i], arr[i]);
-    }
-    skiplist_dump(&list);
-
-    printf("Search:--------------------\n");
-    int keys[] = {3, 4, 7, 10, 111};
-
-    for (i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
-    {
-        snode *x = skiplist_search(&list, keys[i]);
-        if (x)
-        {
-            printf("key = %d, value = %d\n", keys[i], x->value);
-        }
-        else
-        {
-            printf("key = %d, not fuound\n", keys[i]);
-        }
+        insert_node(list, i, 10 * i);
     }
 
-    printf("Search:--------------------\n");
-    skiplist_delete(&list, 3);
-    skiplist_delete(&list, 9);
-    skiplist_dump(&list);
+    delete_node(list, 2);
+    // result = search_node(list, 1)->value;
+    // printf("Searching Result is %d\n", result);
+
+    result = search_node(list, 3)->value;
+    printf("Searching Result is %d\n", result);
+
+    // Save the skip list to a file
+    save_skiplist(list, "skiplist.dat");
+
+    // Load the skip list from the file
+    SkipList *loaded_list = load_skiplist(filename);
+    result = search_node(list, 3)->value;
+    printf("Latest Searching Result is %d\n", result);
+
+    // Print the loaded skip list
+    // print_skiplist(loaded_list);
+
+    printf("Everything is prepared!\n\n");
+    printf("Starting Directly Read from Disk...\n");
+
+    result = search_skiplist_fread(filename, 300);
+    printf("Disk Searching Result is %d\n", result);
 
     return 0;
 }
