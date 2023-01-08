@@ -6,6 +6,7 @@
 #define CACHE_ARG_KEY 1337
 #define RANGE_SUM_KEY 9999
 #define RANGE_MAX_KEY 8888
+#define RANGE_AVG_KEY 7777
 
 struct ArgState
 {

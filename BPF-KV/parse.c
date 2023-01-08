@@ -132,7 +132,8 @@ void parse_get_opts(int argc, char *argv[], struct GetArgs *get_args)
 static struct argp_option range_opts[] = {
     {"dump", 'd', 0, 0, "Dump values to stdout."},
     {"sum", RANGE_SUM_KEY, 0, 0, "Sum the first 8 bytes of each value instead of returning them."},
-    {"max", RANGE_SUM_KEY, 0, 0, "Maximum the value"},
+    {"max", RANGE_MAX_KEY, 0, 0, "Maximum the value"},
+    {"avg", RANGE_AVG_KEY, 0, 0, "AVG"},
     {"use-xrp", 'x', 0, 0, "Use the (previously) loaded XRP BPF function to query the DB."},
     {"requests", 'r', "REQ", 0, "Number of requests to submit per thread. Ignored if -k is set."},
     {"range-size", 's', "SIZE", 0, "Size of randomly generated ranges for benchmarking."},

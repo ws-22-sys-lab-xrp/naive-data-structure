@@ -139,7 +139,7 @@ static __inline unsigned int process_value(struct bpf_xrp *context, struct Range
     }
     else if (query->agg_op == AGG_MAX)
     {
-        query->agg_value = max(query->agg_value, *(long *)(context->data + offset));
+        query->agg_value = (query->agg_value > *(long *)(context->data + offset)) ? query->agg_value : *(long *)(context->data + offset);
     }
     else if (query->agg_op == AGG_AVG)
     {

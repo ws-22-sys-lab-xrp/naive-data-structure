@@ -204,7 +204,7 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                 }
                 else if (query->agg_op == AGG_MAX)
                 {
-                    query->agg_value = max(query->agg_value, *(long *)(scratch + value_offset(ptr)));
+                    query->agg_value = (query->agg_value > *(long *)(scratch + value_offset(ptr))) ? query->agg_value : *(long *)(scratch + value_offset(ptr));
                 }
                 else if (query->agg_op == AGG_AVG)
                 {
