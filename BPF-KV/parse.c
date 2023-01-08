@@ -177,6 +177,10 @@ static int _parse_range_opts(int key, char *arg, struct argp_state *state)
         st->agg_op = AGG_MAX;
         break;
 
+    case RANGE_AVG_KEY:
+        st->agg_op = AGG_AVG;
+        break;
+
     case 'r':
     {
         char *endptr = NULL;
