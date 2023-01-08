@@ -1,7 +1,11 @@
+#include "helpers.h"
+
 #define BLK_SIZE 512
 #define BLK_SIZE_LOG 9
 #define SCRATCH_SIZE 4096
-#define SYS_READ_XRP 452
+
+// TODO: Need to check the number
+#define SYS_READ_XRP 450
 
 typedef unsigned long ptr__t;
 typedef unsigned long uintptr_t;
@@ -30,4 +34,19 @@ long lookup_bpf(int db_fd, int bpf_fd, struct Query *query, ptr__t index_offset)
         memcpy(query->value, maybe_v->value, sizeof(int));
     }
     return ret;
+}
+
+int load_bpf_program(char *path)
+{
+    struct bpf_object *obj;
+    int ret, progfd;
+
+    ret = bpf_prog_load(path, BPF_PROG_TYPE_XRP, &obj, &progfd);
+    if (ret)
+    {
+        printf("Failed to load bpf program\n");
+        exit(1);
+    }
+
+    return progfd;
 }

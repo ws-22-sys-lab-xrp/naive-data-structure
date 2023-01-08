@@ -4,10 +4,10 @@ CC ?= gcc
 
 BPF_CFLAGS ?= -I$(LIBBPF_DIR)/build/usr/
 
-all: easylist.o
+all: operate.o
 
 
-easylist.o: easylist.c
+operate.o: operate.c
 
 %.o: %.c
 	$(CLANG) -S \

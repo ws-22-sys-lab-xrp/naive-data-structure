@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <time.h>
 
+#include "helpers.h"
+
 #define LOAD_MODE 0
 #define RUN_MODE 1
 
@@ -99,12 +101,47 @@ int operate(char *store_path, int pass_in_index, int num, int iteration)
     return fetch(fd, index);
 }
 
+int process(char *store_path, int pass_in_index, int num, int iteration)
+{
+    // TODO: need to cancel use xrp
+    int use_xrp = 1;
+
+    int bpf_fd = -1;
+    if (use_xrp)
+    {
+        bpf_fd = load_bpf_program("xrp-bpf/operate.o");
+    }
+
+    int flags = O_RDONLY;
+    if (use_xrp)
+    {
+        // TODO: need to change
+        // flags = flags | O_DIRECT;
+    }
+    int db_fd = open(store_path, flags);
+    struct Query query = new_query(pass_in_index);
+
+    // normal processing
+    printf("Normal Processing...\n");
+    int result = operate("hanwen_db", 0, num, iteration);
+    printf("Normal Process\n Result is : %d\n", result);
+
+    if (use_xrp)
+    {
+        printf("XRP Processing...\n");
+        int xrp_result = 999;
+        xrp_result = lookup_bpf(db_fd, bpf_fd, &query, 0);
+
+        printf("XRP Process\n Result is : %d\n", xrp_result);
+    }
+}
+
 // TODO: get function
 
 int main()
 {
-    int num = 1000000;
-    int iteration = 10000000;
+    int num = 100;
+    int iteration = 10000;
     clock_t generate_start = clock();
     load(num, "hanwen_db");
     clock_t generate_end = clock();
@@ -120,5 +157,10 @@ int main()
     clock_t compute_end = clock();
     printf("Result is : %d\n", result);
     printf("Computing Time is %f seconds.\n", (double)(compute_end - compute_start) / CLOCKS_PER_SEC);
+
+    /* Above is for testing usage*/
+    printf("Currently in the comparison\n\n");
+    process("hanwen_db", 0, num, iteration);
+
     return 0;
 }

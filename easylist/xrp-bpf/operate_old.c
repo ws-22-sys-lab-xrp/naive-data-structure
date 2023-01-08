@@ -50,8 +50,22 @@ unsigned int easylist(struct bpf_xrp *context)
     int *iteration = (int *)context->data;
     int *curr_idx = &query->current_index;
 
+    // TODO: pass in the value
+    // Case 1 - Read value from query result
+    if (query->state_flags == QUERY_END)
+    {
+        dbg_print("easylist: case 1 - query end\n");
+        // ptr__t offset = query->value_ptr & (BLK_SIZE - 1);
+        struct MaybeValue *mv = &query->values[*curr_idx & EBPF_CONTEXT_MASK];
+        mv->found = 1;
+        memcpy(mv->value, context->data, sizeof(int));
+
+        set_context_next_index(context, query);
+        return 0;
+    }
+
     // TODO: pass out the new index things
-    // Case 1 - End Term Processing -> fetch the value
+    // Case 2 - End Term Processing
     // Return the value
     if (curr_idx >= query->iteration)
     {
@@ -59,8 +73,7 @@ unsigned int easylist(struct bpf_xrp *context)
 
         // set_context_next_index(context, query);
     }
-
-    // Case 2 - Continue Processing
+    // Case 3 - Continue Processing
 
     context->next_addr[0] = 0;
     context->size[0] = 0;
@@ -69,11 +82,5 @@ unsigned int easylist(struct bpf_xrp *context)
 
 static __inline int function_name()
 {
-    return 0;
-}
-
-static __inline int fetch_value(int index)
-{
-
     return 0;
 }
