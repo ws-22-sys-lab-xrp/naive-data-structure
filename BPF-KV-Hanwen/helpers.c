@@ -83,6 +83,7 @@ void checked_pread(int fd, void *buf, size_t size, long offset) {
  * @return B+ tree encoded byte offset into the db file
  */
 ptr__t nxt_node(unsigned long key, Node *node) {
+    // printf("nxt_node\n");
     for (size_t i = 1; i < NODE_CAPACITY; ++i) {
         if (key < node->key[i]) {
             return node->ptr[i - 1];

@@ -8,8 +8,7 @@
 #define RANGE_MAX_KEY 8888
 #define RANGE_AVG_KEY 7777
 
-struct ArgState
-{
+struct ArgState {
     /* Required Args */
     char *filename;
     int layers;
@@ -17,8 +16,7 @@ struct ArgState
     int subcommand_retval;
 };
 
-struct GetArgs
-{
+struct GetArgs {
     long key;
 
     /* Flags */
@@ -31,8 +29,7 @@ struct GetArgs
     size_t database_layers;
 };
 
-struct RangeArgs
-{
+struct RangeArgs {
     int dump_flag;
     int xrp;
     unsigned long range_begin;
@@ -43,19 +40,19 @@ struct RangeArgs
     int agg_op;
 };
 
-static inline struct ArgState default_argstate(void)
-{
-    struct ArgState as = {0};
+static inline struct ArgState default_argstate(void) {
+    struct ArgState as = { 0 };
     return as;
 }
 
-struct Range
-{
+struct Range {
     unsigned long begin;
     unsigned long end;
 };
 
-int run_subcommand(struct argp_state *state, char *cmd_name, int (*subcommand)(int argc, char *argv[], struct ArgState *));
+int run_subcommand(struct argp_state *state, char *cmd_name, int(*subcommand)(int argc, char* argv[], struct ArgState*));
+
+
 
 int parse_range(struct Range *range, char *range_str);
 
