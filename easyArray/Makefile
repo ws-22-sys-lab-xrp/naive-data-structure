@@ -5,7 +5,7 @@ LDLIBS = -pthread -lbpf -lm
 
 all: easylist bpf
 
-easylist: easylist.c
+easylist: main.c
 
 .PHONY: bpf
 bpf:

@@ -43,6 +43,7 @@ struct ScatterGatherQuery
     int current_array_index;
     int current_iteration;
     ptr__t array;
+    int array_length;
     int iteration;
 };
 
