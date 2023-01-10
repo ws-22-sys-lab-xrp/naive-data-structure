@@ -1,4 +1,10 @@
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
 #include "helpers.h"
+#include "db_types.h"
 
 #define BLK_SIZE 512
 #define BLK_SIZE_LOG 9
@@ -20,7 +26,7 @@ long lookup_bpf(int db_fd, int bpf_fd, struct Query *query, ptr__t index_offset)
     memset(buf, 0, 0x1000);
     memset(scratch, 0, 0x1000);
 
-    struct ScatterGatterQuery *sgq = (struct ScatterGatherQuery *)scratch;
+    struct ScatterGatherQuery *sgq = (struct ScatterGatherQuery *)scratch;
     sgq->keys[0] = query->key;
     sgq->n_keys = 1;
 

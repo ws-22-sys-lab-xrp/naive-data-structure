@@ -3,9 +3,12 @@ CFLAGS = -Wall -D_GNU_SOURCE -Wunused
 LDLIBS = -pthread -lbpf -lm
 
 
-all: easylist bpf
+all: main bpf
 
-easylist: main.c
+main: main.c helpers.o
+
+helpers.o: helpers.c
+
 
 .PHONY: bpf
 bpf:
