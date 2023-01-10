@@ -60,7 +60,6 @@ unsigned int easylist(struct bpf_xrp *context)
     int *location = (query->array + current_array_index * EBPF_INT_SIZE);
     int value = *location;
 
-    // TODO: pass out the new index things - By using context->data
     // Case 1 - End Term Processing -> fetch the value
     // Return the value
     if (current_iteration >= query->iteration)
@@ -75,17 +74,6 @@ unsigned int easylist(struct bpf_xrp *context)
 
     int new_index = (value * 2) % (query->array_length);
     query->current_array_index = new_index;
-
-    return 0;
-}
-
-static __inline int function_name()
-{
-    return 0;
-}
-
-static __inline int fetch_value(int index)
-{
 
     return 0;
 }
