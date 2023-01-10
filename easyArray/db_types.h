@@ -40,11 +40,11 @@ struct ScatterGatherQuery
     int current_index;
     // use for searching
 
-    int current_array_index;
-    int current_iteration;
+    unsigned int current_array_index;
+    unsigned int current_iteration;
     ptr__t array;
-    int array_length;
-    int iteration;
+    unsigned int array_length;
+    unsigned int iteration;
 };
 
 static inline struct Query new_query(long key)

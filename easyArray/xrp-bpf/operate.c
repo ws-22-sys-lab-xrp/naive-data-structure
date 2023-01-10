@@ -1,5 +1,6 @@
 #include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
+#include <string.h>
 #include "../db_types.h"
 
 #define IN_PROCESS 0;
@@ -50,16 +51,17 @@ SEC("operate")
 unsigned int easylist(struct bpf_xrp *context)
 {
     struct ScatterGatherQuery *query = (struct ScatterGatherQuery *)context->scratch;
-    int current_iteration = query->current_iteration;
-    int current_array_index = query->current_array_index;
+    unsigned int current_iteration = query->current_iteration;
+    unsigned int current_array_index = query->current_array_index;
     // Extension to searching more elements - range
     // int *curr_idx = &query->current_index;
 
     // Fetch the target value
     // TODO: find out the relating address operations
-    int *location = (query->array + current_array_index * EBPF_INT_SIZE);
-    int value = *location;
+    unsigned long location = (query->array + current_array_index * EBPF_INT_SIZE);
+    unsigned int value = *(unsigned int *)location;
 
+    // TODO: pass out the new index things - By using context->data
     // Case 1 - End Term Processing -> fetch the value
     // Return the value
     if (current_iteration >= query->iteration)
@@ -67,12 +69,12 @@ unsigned int easylist(struct bpf_xrp *context)
         query->state_flags = REACH_END;
         context->done = 1;
         // Saving the result to context->date
-        memcpy(location, context->data, sizeof(int));
+        memcpy((int *)location, context->data, sizeof(int));
     }
 
     // Case 2 - Continue Processing
 
-    int new_index = (value * 2) % (query->array_length);
+    unsigned int new_index = (value * 2) % (query->array_length);
     query->current_array_index = new_index;
 
     return 0;
