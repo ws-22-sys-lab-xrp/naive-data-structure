@@ -27,3 +27,8 @@ Current Workflow:
 ## Remarks
 
 1. add insert-deletion : not best use case of XRP
+2. nvme_handle_cqe / xrp_resubmit_level_count -> constrains
+3. file system - ext4 -> find a file system
+4. jump index -> other datastructures
+5. moving computation closer to the device -> design complex problems
+6. bypass network
