@@ -16,7 +16,7 @@ Targets:
 
 Current Problems:
 
-1. Not fully understand disk-io process in the code implementation - solved
+1. Not fully understanding disk-io process in the code implementation - solved
 2. XRP transplant
 
 Current Workflow:
@@ -26,9 +26,10 @@ Current Workflow:
 
 ## Remarks
 
-1. add insert-deletion : not best use case of XRP
-2. nvme_handle_cqe / xrp_resubmit_level_count -> constrains
-3. file system - ext4 -> find a file system
-4. jump index -> other datastructures
-5. moving computation closer to the device -> design complex problems
+1. add insert-deletion: not best use case of XRP
+2. nvme_handle_cqe / xrp_resubmit_level_count -> constrains ✅
+3. file system - ext4 -> find a file system ⛔️
+4. jump index -> other data structures 🎵
+5. moving computation closer to the device -> design complex problems  🎵
 6. bypass network
+6. research on BPF-KV to extend to multiple `nvme_submit_cmds`
