@@ -33,3 +33,4 @@ Current Workflow:
 5. moving computation closer to the device -> design complex problems  🎵
 6. bypass network
 6. research on BPF-KV to extend to multiple `nvme_submit_cmds`
+6. Verifier.c
