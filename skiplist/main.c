@@ -297,8 +297,11 @@ int main()
     printf("Everything is prepared!\n\n");
     printf("Starting Directly Read from Disk...\n");
 
-    result = search_skiplist_fread(filename, 300);
-    printf("Disk Searching Result is %d\n", result);
+    for (int key = 0; key <= 100; key++)
+    {
+        result = search_skiplist_fread(filename, key);
+        printf("Disk Searching Result is %d\n", result);
+    }
 
     return 0;
 }
