@@ -16,5 +16,5 @@ bpf:
 
 .PHONY: clean
 clean:
-	rm -rf simplekv *.o
+	rm -rf main *.o
 	make -C xrp-bpf -f Makefile clean

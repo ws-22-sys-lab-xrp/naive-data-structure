@@ -6,7 +6,6 @@ BPF_CFLAGS ?= -I$(LIBBPF_DIR)/build/usr/
 
 all: operate.o
 
-
 operate.o: operate.c
 
 %.o: %.c
