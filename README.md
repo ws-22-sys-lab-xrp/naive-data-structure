@@ -22,6 +22,7 @@ Current Problems:
 Current Workflow:
 
 1. Try to imitate the xrp implementation step-by-step
+
 ----
 
 ## Remarks
@@ -32,5 +33,8 @@ Current Workflow:
 4. jump index -> other data structures 🎵
 5. moving computation closer to the device -> design complex problems  🎵
 6. bypass network
-6. research on BPF-KV to extend to multiple `nvme_submit_cmds` 🎵
-6. Verifier.c ⛔️
+7. research on BPF-KV to extend to multiple `nvme_submit_cmds` 🎵
+8. Verifier.c ⛔️
+9. align the agg_op in different files (BPF-KV):
+   - `int agg_op` in parse.h
+   - `unsigned agg_op` in db_types.h
