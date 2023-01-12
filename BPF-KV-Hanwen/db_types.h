@@ -1,7 +1,6 @@
 #ifndef DB_TYPES_H
 #define DB_TYPES_H
 
-
 // Data-level information
 typedef unsigned long meta__t;
 typedef unsigned long key__t;
@@ -26,30 +25,36 @@ typedef unsigned long ptr__t;
 #define LEAF 1
 
 #define NODE_CAPACITY ((BLK_SIZE - 2 * META_SIZE) / (KEY_SIZE + PTR_SIZE))
-#define LOG_CAPACITY  ((BLK_SIZE) / (VAL_SIZE))
+#define LOG_CAPACITY ((BLK_SIZE) / (VAL_SIZE))
 #define FANOUT NODE_CAPACITY
 
-static __inline ptr__t value_base(ptr__t ptr) {
+static __inline ptr__t value_base(ptr__t ptr)
+{
     return ptr & ~(BLK_SIZE - 1);
 }
 
-static __inline ptr__t value_offset(ptr__t ptr) {
+static __inline ptr__t value_offset(ptr__t ptr)
+{
     return ptr & (BLK_SIZE - 1);
 }
 
-static __inline ptr__t encode(ptr__t ptr) {
+static __inline ptr__t encode(ptr__t ptr)
+{
     return ptr | FILE_MASK;
 }
 
-static __inline ptr__t decode(ptr__t ptr) {
+static __inline ptr__t decode(ptr__t ptr)
+{
     return ptr & (~FILE_MASK);
 }
 
-static inline ptr__t is_file_offset(ptr__t ptr) {
+static inline ptr__t is_file_offset(ptr__t ptr)
+{
     return ptr & FILE_MASK;
 }
 
-typedef struct _Node {
+typedef struct _Node
+{
     meta__t next;
     meta__t type;
     key__t key[NODE_CAPACITY];
@@ -58,7 +63,8 @@ typedef struct _Node {
 
 _Static_assert(sizeof(Node) == BLK_SIZE, "Nodes must be block sized");
 
-typedef struct _Log {
+typedef struct _Log
+{
     val__t val[LOG_CAPACITY];
 } Log;
 
@@ -66,7 +72,8 @@ typedef struct _Log {
 #define REACHED_LEAF 1
 
 /* struct used to communicate with BPF function via scratch buffer */
-struct Query {
+struct Query
+{
     /* everything is a long to make debugging in gdb easier */
     key__t key;
     long found;
@@ -81,15 +88,16 @@ struct Query {
     ptr__t current_parent;
 };
 
-
 #define SG_KEYS 32
 
-struct MaybeValue {
+struct MaybeValue
+{
     char found;
     val__t value;
 };
 
-struct ScatterGatherQuery {
+struct ScatterGatherQuery
+{
     ptr__t root_pointer;
     ptr__t value_ptr;
     unsigned int state_flags;
@@ -99,8 +107,9 @@ struct ScatterGatherQuery {
     struct MaybeValue values[SG_KEYS];
 };
 
-static inline struct ScatterGatherQuery new_sg_query(void) {
-    struct ScatterGatherQuery sgq = { 0 };
+static inline struct ScatterGatherQuery new_sg_query(void)
+{
+    struct ScatterGatherQuery sgq = {0};
     return sgq;
 }
 
@@ -108,13 +117,11 @@ static inline struct ScatterGatherQuery new_sg_query(void) {
 #define RNG_BEGIN_EXCLUSIVE 1u
 #define RNG_END_INCLUSIVE 1u << 1
 
-
 /* State flags for internal use */
 #define RNG_RESUME 1
 #define RNG_TRAVERSE 2
 #define RNG_READ_VALUE 3
 #define RNG_READ_NODE 4
-
 
 /* Agg operations */
 #define AGG_NONE 0
@@ -122,7 +129,8 @@ static inline struct ScatterGatherQuery new_sg_query(void) {
 #define AGG_MAX 2
 #define AGG_AVG 3
 
-struct KeyValue {
+struct KeyValue
+{
     key__t key;
     val__t value;
 };
@@ -132,7 +140,8 @@ struct KeyValue {
  *
  * This can be controlled by setting the [BEGIN_EXCLUSIVE] and [END_INCLUSIVE] flags.
  */
-struct RangeQuery {
+struct RangeQuery
+{
     key__t range_begin;
     key__t range_end;
     unsigned int flags;
@@ -141,7 +150,7 @@ struct RangeQuery {
     /* Number of populated values */
     int len;
     struct KeyValue kv[RNG_KEYS];
-    long agg_value;
+    unsigned long long agg_value;
 
     /* Internal data: Pointer to leaf node used by the BPF to resume the query */
     unsigned int _state;
@@ -150,8 +159,10 @@ struct RangeQuery {
     Node _current_node;
 };
 
-static inline int empty_range(struct RangeQuery const *query) {
-    if (query->range_begin > query->range_end) {
+static inline int empty_range(struct RangeQuery const *query)
+{
+    if (query->range_begin > query->range_end)
+    {
         return 1;
     }
 
@@ -159,12 +170,14 @@ static inline int empty_range(struct RangeQuery const *query) {
     unsigned int end_inclusive = query->flags & RNG_END_INCLUSIVE;
 
     int equal = query->range_begin == query->range_end;
-    if (equal && (begin_exclusive || !end_inclusive)) {
+    if (equal && (begin_exclusive || !end_inclusive))
+    {
         return 1;
     }
 
     int diff_one = query->range_begin + 1 == query->range_end;
-    if (diff_one && (begin_exclusive && !end_inclusive)) {
+    if (diff_one && (begin_exclusive && !end_inclusive))
+    {
         return 1;
     }
     return 0;
@@ -175,7 +188,8 @@ static inline int empty_range(struct RangeQuery const *query) {
  * @param query
  * @return 0 if query is ready to resume, 1 if complete / empty range
  */
-static inline int prep_range_resume(struct RangeQuery *query) {
+static inline int prep_range_resume(struct RangeQuery *query)
+{
     query->len = 0;
     query->_state = RNG_RESUME;
     /* Check if there are no more keys to retrieve */
@@ -183,7 +197,8 @@ static inline int prep_range_resume(struct RangeQuery *query) {
 }
 
 /* Mark a range query complete; `empty_range` will return true after marking the query with this function */
-static __inline void mark_range_query_complete(struct RangeQuery *query) {
+static __inline void mark_range_query_complete(struct RangeQuery *query)
+{
     query->range_begin = query->range_end;
     query->flags |= RNG_BEGIN_EXCLUSIVE;
     query->flags &= ~RNG_END_INCLUSIVE;
@@ -196,31 +211,33 @@ static __inline void mark_range_query_complete(struct RangeQuery *query) {
  * @param end
  * @param flags
  */
-static inline void set_range(struct RangeQuery *query, key__t begin, key__t end, long flags) {
+static inline void set_range(struct RangeQuery *query, key__t begin, key__t end, long flags)
+{
     query->range_begin = begin;
     query->range_end = end;
     query->flags = flags;
     query->len = 0;
+    query->agg_value = 0;
     query->_state = RNG_TRAVERSE;
     query->_resume_from_leaf = ROOT_NODE_OFFSET;
 }
 
-_Static_assert (sizeof(struct Query) <= SCRATCH_SIZE, "struct Query too large for scratch page");
-_Static_assert (sizeof(struct ScatterGatherQuery) <= SCRATCH_SIZE, "struct ScatterGatherQuery too large for scratch page");
-_Static_assert (sizeof(struct RangeQuery) <= SCRATCH_SIZE, "struct RangeQuery too large for scratch page");
+_Static_assert(sizeof(struct Query) <= SCRATCH_SIZE, "struct Query too large for scratch page");
+_Static_assert(sizeof(struct ScatterGatherQuery) <= SCRATCH_SIZE, "struct ScatterGatherQuery too large for scratch page");
+_Static_assert(sizeof(struct RangeQuery) <= SCRATCH_SIZE, "struct RangeQuery too large for scratch page");
 
-static inline struct Query new_query(long key) {
+static inline struct Query new_query(long key)
+{
     struct Query query = {
         .key = key,
         .found = 0,
         .state_flags = 0,
-        .value = { 0 },
+        .value = {0},
         .value_ptr = 0,
-        .current_node = { 0 },
-        .current_parent = 0
+        .current_node = {0},
+        .current_parent = 0,
     };
     return query;
 }
 
 #endif /* DB_TYPES_H */
-
