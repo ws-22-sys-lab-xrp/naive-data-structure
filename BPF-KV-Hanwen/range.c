@@ -209,9 +209,24 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                 checked_pread(db_fd, scratch, BLK_SIZE, (long)value_base(ptr));
                 /* What we do next depends on the type of opp we're doing */
 
-                // unsigned long long tmp = *(long *)(scratch + value_offset(ptr));
-                // printf("current value: %llu\n", tmp);
+                // TODO: not unsigned long long int or uint64_t
+                // TODO: we need to find one way to transfer value
+                uint64_t tmp = 0;
+                // memcpy(&tmp, scratch + value_offset(ptr), sizeof(val__t));
+                printf("current value: %llu\n", tmp);
+
                 val__t tmp_value;
+                char buf_v[sizeof(val__t) + 1] = {0};
+                buf_v[sizeof(val__t)] = '\0';
+                memcpy(tmp_value, scratch + value_offset(ptr), sizeof(val__t));
+                memcpy(buf_v, tmp_value, sizeof(val__t));
+
+                char *trimmed_v = buf_v;
+                while (isspace(*trimmed_v))
+                {
+                    ++trimmed_v;
+                }
+                fprintf(stdout, "tmp_value: %s\n", trimmed_v);
 
                 if (query->agg_op == AGG_NONE)
                 {
@@ -223,27 +238,16 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                 }
                 else if (query->agg_op == AGG_SUM)
                 {
-                    char buf_v[sizeof(val__t) + 1] = {0};
-                    buf_v[sizeof(val__t)] = '\0';
-                    memcpy(tmp_value, scratch + value_offset(ptr), sizeof(val__t));
-                    memcpy(buf_v, tmp_value, sizeof(val__t));
-
-                    char *trimmed_v = buf_v;
-                    while (isspace(*trimmed_v))
-                    {
-                        ++trimmed_v;
-                    }
-                    fprintf(stdout, "tmp_value: %s\n", trimmed_v);
-                    // query->agg_value += *(unsigned long *)(scratch + value_offset(ptr));
+                    query->agg_value += *(unsigned long long int *)(scratch + value_offset(ptr));
                 }
                 else if (query->agg_op == AGG_MAX)
                 {
-                    int tmp = 123;
+                    unsigned long long int tmp = *(unsigned long long int *)(scratch + value_offset(ptr));
                     query->agg_value = (query->agg_value > tmp) ? query->agg_value : tmp;
                 }
                 else if (query->agg_op == AGG_AVG)
                 {
-                    query->agg_value += *(long *)(scratch + value_offset(ptr));
+                    query->agg_value += *(unsigned long long int *)(scratch + value_offset(ptr));
                     query->len += 1;
                 }
             }
