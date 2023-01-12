@@ -31,6 +31,7 @@ Current Workflow:
 2. nvme_handle_cqe / xrp_resubmit_level_count -> constrains ✅
 3. file system - ext4 -> find a file system ⛔️
 4. jump index -> other data structures 🎵
+   - for xrp, apply the continue space first
 5. moving computation closer to the device -> design complex problems  🎵
 6. bypass network
 7. research on BPF-KV to extend to multiple `nvme_submit_cmds` 🎵
