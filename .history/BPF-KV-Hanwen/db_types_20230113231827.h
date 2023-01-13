@@ -159,8 +159,6 @@ struct RangeQuery
     ptr__t _resume_from_leaf;
     unsigned int _node_key_ix;
     Node _current_node;
-
-    unsigned char whole_list[7680]//not sure
 };
 
 static inline int empty_range(struct RangeQuery const *query)

@@ -128,8 +128,6 @@ static inline struct ScatterGatherQuery new_sg_query(void)
 #define AGG_SUM 1
 #define AGG_MAX 2
 #define AGG_AVG 3
-#define AGG_PUSH 4
-#define AGG_ADDTOSET 5
 
 struct KeyValue
 {
@@ -159,8 +157,6 @@ struct RangeQuery
     ptr__t _resume_from_leaf;
     unsigned int _node_key_ix;
     Node _current_node;
-
-    unsigned char whole_list[7680]//not sure
 };
 
 static inline int empty_range(struct RangeQuery const *query)

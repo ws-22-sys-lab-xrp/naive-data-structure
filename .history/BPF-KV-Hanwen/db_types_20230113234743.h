@@ -6,6 +6,7 @@ typedef unsigned long meta__t;
 typedef unsigned long key__t;
 typedef unsigned char val__t[64];
 typedef unsigned long ptr__t;
+typedef unsigned char val__t__all[256];
 
 #define META_SIZE sizeof(meta__t)
 #define KEY_SIZE sizeof(key__t)
@@ -160,7 +161,7 @@ struct RangeQuery
     unsigned int _node_key_ix;
     Node _current_node;
 
-    unsigned char whole_list[7680]//not sure
+    val__t whole_list[64]//not sure
 };
 
 static inline int empty_range(struct RangeQuery const *query)

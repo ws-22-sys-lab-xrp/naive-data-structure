@@ -7,8 +7,6 @@
 #define RANGE_SUM_KEY 9999
 #define RANGE_MAX_KEY 8888
 #define RANGE_AVG_KEY 7777
-#define PUSH_KEY 6666
-#define ADDTOSET_KEY 5555
 
 struct ArgState {
     /* Required Args */

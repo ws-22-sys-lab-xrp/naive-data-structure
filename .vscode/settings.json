@@ -1,5 +1,6 @@
 {
     "files.associations": {
         "simplekvspec.h": "c"
-    }
+    },
+    "cmake.sourceDirectory": "${workspaceFolder}/BPF-KV"
 }

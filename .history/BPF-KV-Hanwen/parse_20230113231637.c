@@ -125,8 +125,8 @@ static struct argp_option range_opts[] = {
         { "sum", RANGE_SUM_KEY, 0, 0, "Sum the first 8 bytes of each value instead of returning them."},
         {"max", RANGE_MAX_KEY, 0, 0, "Return the maximum the value"},
         {"avg", RANGE_AVG_KEY, 0, 0, "Return the average of the values"},
-        {"push", PUSH_KEY, 0, 0, "Add values to an array without judging whether there are duplicate values"},
-        {"addToSet", ADDTOSET_KEY, 0, 0, "Adding values to an array will determine whether there are duplicate values."},
+        {"push", PUSH_KEY, 0, 0, "Return the average of the values"},
+        {"addToSet", ADDTOSET_KEY, 0, 0, "Return the average of the values"},
         { 0 }
 };
 static char range_doc[] = "Perform a range query against the specified database\v"
@@ -192,7 +192,7 @@ static int _parse_range_opts(int key, char *arg, struct argp_state *state) {
         case PUSH_KEY:
             st->agg_op = AGG_PUSH;
             break;
-
+            
         case ADDTOSET_KEY:
             st->agg_op = AGG_ADDTOSET;
             break;

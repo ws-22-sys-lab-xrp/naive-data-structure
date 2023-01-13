@@ -119,14 +119,12 @@ void parse_get_opts(int argc, char *argv[], struct GetArgs *get_args) {
 /* Parsing for range query benchmark */
 static struct argp_option range_opts[] = {
         { "dump", 'd', 0, 0, "Dump values to stdout." },
+        { "sum", RANGE_SUM_KEY, 0, 0, "Sum the first 8 bytes of each value instead of returning them."},
+        {"max", RANGE_MAX_KEY, 0, 0, "Maximum the value"},
+        {"avg", RANGE_AVG_KEY, 0, 0, "AVG"},
         { "use-xrp", 'x', 0, 0, "Use the (previously) loaded XRP BPF function to query the DB." },
         { "requests", 'r', "REQ", 0, "Number of requests to submit per thread. Ignored if -k is set." },
         { "range-size", 's', "SIZE", 0, "Size of randomly generated ranges for benchmarking." },
-        { "sum", RANGE_SUM_KEY, 0, 0, "Sum the first 8 bytes of each value instead of returning them."},
-        {"max", RANGE_MAX_KEY, 0, 0, "Return the maximum the value"},
-        {"avg", RANGE_AVG_KEY, 0, 0, "Return the average of the values"},
-        {"push", PUSH_KEY, 0, 0, "Add values to an array without judging whether there are duplicate values"},
-        {"addToSet", ADDTOSET_KEY, 0, 0, "Adding values to an array will determine whether there are duplicate values."},
         { 0 }
 };
 static char range_doc[] = "Perform a range query against the specified database\v"
@@ -155,6 +153,17 @@ static int _parse_range_opts(int key, char *arg, struct argp_state *state) {
             st->dump_flag = 1;
             break;
 
+        case RANGE_SUM_KEY:
+            st->agg_op = AGG_SUM;
+            break;
+        case RANGE_MAX_KEY:
+        st->agg_op = AGG_MAX;
+        break;
+
+    case RANGE_AVG_KEY:
+        st->agg_op = AGG_AVG;
+        break;
+
         case 'r': {
             char *endptr = NULL;
             st->requests = strtol(arg, &endptr, 10);
@@ -175,26 +184,6 @@ static int _parse_range_opts(int key, char *arg, struct argp_state *state) {
                 argp_error(state, "invalid number of requests");
             }
         }
-            break;
-        
-        case RANGE_SUM_KEY:
-            st->agg_op = AGG_SUM;
-            break;
-        
-        case RANGE_MAX_KEY:
-        st->agg_op = AGG_MAX;
-        break;
-
-        case RANGE_AVG_KEY:
-            st->agg_op = AGG_AVG;
-            break;
-
-        case PUSH_KEY:
-            st->agg_op = AGG_PUSH;
-            break;
-
-        case ADDTOSET_KEY:
-            st->agg_op = AGG_ADDTOSET;
             break;
 
         case ARGP_KEY_END:

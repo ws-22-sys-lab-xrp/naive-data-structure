@@ -57,14 +57,6 @@ static void print_query_results(struct RangeQuery *query)
         fprintf(stdout, "%d --AVG(LEN)\n", query->len);
         fprintf(stdout, "%lld --AVG\n", query->agg_value / query->len);
     }
-    else if (query->agg_op == AGG_PUSH)
-    {
-        //TODO
-    }
-    else if (query->agg_op == AGG_ADDTOSET)
-    {
-        //TODO
-    }
 }
 
 int do_range_cmd(int argc, char *argv[], struct ArgState *as)
@@ -258,14 +250,6 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                 {
                     query->agg_value += *(unsigned long long int *)(scratch + value_offset(ptr));
                     query->len += 1;
-                }
-                else if (query->agg_op == AGG_PUSH)
-                {
-                    //TODO
-                }
-                else if (query->agg_op == AGG_ADDTOSET)
-                {
-                    //TODO
                 }
             }
         }

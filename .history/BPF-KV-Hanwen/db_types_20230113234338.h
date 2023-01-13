@@ -160,7 +160,7 @@ struct RangeQuery
     unsigned int _node_key_ix;
     Node _current_node;
 
-    unsigned char whole_list[7680]//not sure
+    unsigned char whole_list[64]
 };
 
 static inline int empty_range(struct RangeQuery const *query)
