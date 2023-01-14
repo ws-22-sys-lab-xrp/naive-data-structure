@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <argp.h>
 #include <fcntl.h>
@@ -10,9 +11,11 @@
 #include "simplekv.h"
 #include "helpers.h"
 
-static void print_query_results(struct RangeQuery *query)
+static void print_query_results(int argc, char *argv[],struct RangeQuery *query)
 {
-    printf("Range Query ends in %ld\n", query->range_end);
+    struct RangeArgs ra;
+    parse_range_opts(argc, argv, &ra);
+    printf("Range Query starts in %ld\n", (query->range_end) - (ra.range_size ));
     if (query->agg_op == AGG_NONE)
     {
 
@@ -46,23 +49,65 @@ static void print_query_results(struct RangeQuery *query)
     }
     else if (query->agg_op == AGG_PUSH)
     {
-        unsigned char buf_v[1000][sizeof(val__t) + 1] = {0};
-        buf_v[1000][sizeof(val__t)] = '\0';
+        unsigned char buf_v[10][sizeof(val__t) + 1] = {0};
+        buf_v[10][sizeof(val__t)] = '\0';
       
-        memcpy(buf_v[ra.query], query->whole_list[ra.query], sizeof(val__t));
-        char *trimmed_v = buf_v[ra.query];
+        memcpy(buf_v[ra.query-1], query->whole_list[ra.query-1], sizeof(val__t));
+        unsigned char *trimmed_v = buf_v[ra.query-1];
         fprintf(stdout, "value: %s\n", trimmed_v);
+
+        int rows = sizeof(query->whole_list) / sizeof(query->whole_list[0]);
+        int cols = sizeof(query->whole_list[0]) / sizeof(unsigned char);
+
+        int new_rows = 1;
+        for (int i = 0; i < rows; i++) {
+            int is_empty = 1;
+            for (int j = 0; j < cols; j++) {
+                if ((query->whole_list[i][j] == '\0') && (query->whole_list[i][j+1] == '\0')) {
+                    is_empty = 0;
+                    break;
+                }
+            }
+            if (!is_empty) {
+                for (int j = 0; j < cols; j++) {
+                    query->whole_list[new_rows][j] = query->whole_list[i][j];
+                }
+                new_rows++;
+            }
+        }
+        printf("rows: %d, cols: %d\n", new_rows, cols);
     }
     else if (query->agg_op == AGG_ADDTOSET)
     {
-        unsigned char buf_v[1000][sizeof(val__t) + 1] = {0};
-        buf_v[1000][sizeof(val__t)] = '\0';
+        unsigned char buf_v[10][sizeof(val__t) + 1] = {0};
+        buf_v[10][sizeof(val__t)] = '\0';
       
-        memcpy(buf_v[ra.query], query->whole_list[ra.query], sizeof(val__t));
-        char *trimmed_v = buf_v[ra.query];
+        memcpy(buf_v[ra.query-1], query->whole_list[ra.query-1], sizeof(val__t));
+        unsigned char *trimmed_v = buf_v[ra.query-1];
         fprintf(stdout, "value: %s\n", trimmed_v);
+
+        int rows = sizeof(query->whole_list) / sizeof(query->whole_list[0]);
+        int cols = sizeof(query->whole_list[0]) / sizeof(unsigned char);
+
+        int new_rows = 1;
+        for (int i = 0; i < rows; i++) {
+            int is_empty = 1;
+            for (int j = 0; j < cols; j++) {
+                if ((query->whole_list[i][j] == '\0') && (query->whole_list[i][j+1] == '\0')) {
+                    is_empty = 0;
+                    break;
+                }
+            }
+            if (!is_empty) {
+                for (int j = 0; j < cols; j++) {
+                    query->whole_list[new_rows][j] = query->whole_list[i][j];
+                }
+                new_rows++;
+            }
+        }
+        printf("rows: %d, cols: %d\n", new_rows, cols);
     }
-}
+}// really have a two dimension array, but c cannot print it out easily.
 
 int do_range_cmd(int argc, char *argv[], struct ArgState *as)
 {
@@ -124,7 +169,7 @@ int do_range_cmd(int argc, char *argv[], struct ArgState *as)
             }
             if (ra.dump_flag)
             {
-                print_query_results(&query);
+                print_query_results(argc, argv,&query);
             }
             if (prep_range_resume(&query))
             {
@@ -219,7 +264,7 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                 // TODO: we need to find one way to transfer value
                 uint64_t tmp = 0;
                 // memcpy(&tmp, scratch + value_offset(ptr), sizeof(val__t));
-                printf("current value: %llu\n", tmp);
+                // printf("current value: %lu\n", tmp);
 
                 val__t tmp_value;
                 char buf_v[sizeof(val__t) + 1] = {0};
@@ -232,7 +277,7 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                 {
                     ++trimmed_v;
                 }
-                fprintf(stdout, "tmp_value: %s\n", trimmed_v);
+                // fprintf(stdout, "tmp_value: %s\n", trimmed_v);
 
                 if (query->agg_op == AGG_NONE)
                 {
@@ -258,8 +303,7 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                 }
                 else if (query->agg_op == AGG_PUSH)
                 {
-                    //TODO
-                    if ((query->len)  < 1000)
+                    if ((query->len)  < 10)
                         {
                         memcpy(query->whole_list[query->len], scratch + value_offset(ptr), sizeof(val__t));
                         query->len += 1;
@@ -272,15 +316,15 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                 }
                 else if (query->agg_op == AGG_ADDTOSET)
                 {
-                    query->Flag = false
-                    if ((query->len) < 1000)
+                    query->Flag = 0;
+                    if ((query->len) < 10)
                         {
                             for (int i = 0; i < (query->len - 1); ++i)
                             {
-                                if (*(long*)query->whole_list[i] == *(long*)whole_list[query->len])
-                                    query->Flag = true
+                                if (*(long*)query->whole_list[i] == *(long*)(query->whole_list[query->len]))
+                                    query->Flag += 1;
                             }
-                            if ((query->Flag == false)&&((query->len) < 1000))
+                            if ((query->Flag == 0)&&((query->len) < 10))
                                 {
                                 memcpy(query->whole_list[query->len], scratch + value_offset(ptr), sizeof(val__t));
                                 query->len += 1;

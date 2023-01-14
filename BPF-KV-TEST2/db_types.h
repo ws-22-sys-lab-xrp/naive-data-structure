@@ -142,8 +142,7 @@ struct KeyValue
  *
  * This can be controlled by setting the [BEGIN_EXCLUSIVE] and [END_INCLUSIVE] flags.
  */
-struct RangeQuery
-{
+struct RangeQuery {
     key__t range_begin;
     key__t range_end;
     unsigned int flags;
@@ -160,8 +159,8 @@ struct RangeQuery
     unsigned int _node_key_ix;
     Node _current_node;
 
-    unsigned char whole_list[1000][64];//not sure
-    bool Flag;
+    unsigned char whole_list[10][64];//not sure
+    int Flag;
 };
 
 static inline int empty_range(struct RangeQuery const *query)

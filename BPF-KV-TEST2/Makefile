@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -D_GNU_SOURCE -Wunused
+CFLAGS = -Wall -D_GNU_SOURCE -Wunused -g
 LDLIBS = -pthread -lbpf -lm
 
 

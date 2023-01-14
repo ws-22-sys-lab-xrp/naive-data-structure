@@ -38,7 +38,7 @@ struct RangeArgs {
     unsigned long range_end;
     long requests;
     long range_size;
-    long query;
+    int query;
 
     int agg_op;
 };
