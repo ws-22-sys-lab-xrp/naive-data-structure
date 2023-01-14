@@ -188,8 +188,25 @@ unsigned long strtoul_me(const char *cp, char **endp, unsigned int base)
 
 unsigned long long get_value_from_val_t(val__t tmp)
 {
-    unsigned long value = strtol(tmp, NULL, 10);
-    // unsigned long value = strtoul_me(tmp, NULL, 10);
-    printf("Current value: %lu\n", value);
-    return (unsigned long long)value;
+    unsigned long long result = 0;
+    for (int i = 0; i < 64; i++)
+    {
+        if (tmp[i] == 0 || tmp[i] == '\0' || tmp[i] == ' ')
+        {
+            if (result != 0)
+            {
+                break;
+            }
+            continue;
+        }
+        result = result * 10 + tmp[i] - '0';
+    }
+    return result;
 }
+
+// unsigned long long get_value_from_val_t(val__t tmp)
+// {
+//     unsigned long value = strtol(tmp, NULL, 10);
+//     printf("Current value: %lu\n", value);
+//     return (unsigned long long)value;
+// }

@@ -16,11 +16,22 @@
 
 char LICENSE[] SEC("license") = "GPL";
 
-// TODO: need to add strtol
 unsigned long long get_value_from_val_t(val__t tmp)
 {
-    unsigned long value = strtol(tmp, NULL, 10);
-    return (unsigned long long)value;
+    unsigned long long result = 0;
+    for (int i = 0; i < 64; i++)
+    {
+        if (tmp[i] == 0 || tmp[i] == '\0' || tmp[i] == ' ')
+        {
+            if (result != 0)
+            {
+                break;
+            }
+            continue;
+        }
+        result = result * 10 + tmp[i] - '0';
+    }
+    return result;
 }
 
 static __inline ptr__t nxt_node(unsigned long key, Node *node)
