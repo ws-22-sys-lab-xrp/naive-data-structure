@@ -10,19 +10,25 @@
 #define FILE_MASK ((ptr__t)1 << 63)
 
 #ifndef memcpy
-#define memcpy(dest, src, n)   __builtin_memcpy((dest), (src), (n))
+#define memcpy(dest, src, n) __builtin_memcpy((dest), (src), (n))
+#endif
+
+#ifndef strtol
+#define strtol(tmp, null, base) strtol((tmp), (null), (base))
 #endif
 
 // struct
-struct ddp_key{
-	unsigned char data[512];
-	unsigned long key;	
+struct ddp_key
+{
+    unsigned char data[512];
+    unsigned long key;
 };
 
 #ifdef VERBOSE
 #define dbg_print(...) bpf_printk(__VA_ARGS__)
 
-static __inline void print_query(struct Query *q) {
+static __inline void print_query(struct Query *q)
+{
     dbg_print("struct Query {\n");
 
     dbg_print("\tfound = %ld\n", q->found);
@@ -34,7 +40,8 @@ static __inline void print_query(struct Query *q) {
     dbg_print("}\n");
 }
 
-static __inline void print_node(Node *node) {
+static __inline void print_node(Node *node)
+{
     dbg_print("struct Node {\n");
 
     dbg_print("\tnum = %ld\n", node->num);
@@ -49,7 +56,5 @@ static __inline void print_node(Node *node) {
 #else
 #define dbg_print(...)
 #endif
-
-
 
 #endif

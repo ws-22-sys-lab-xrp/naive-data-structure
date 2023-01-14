@@ -16,7 +16,7 @@
 
 #include "db_types.h"
 
-#define SYS_READ_XRP 450
+#define SYS_READ_XRP 445
 
 #define NS_PER_SEC 1000000000
 #define US_PER_NS 1000
@@ -66,7 +66,7 @@ long calculate_max_key(unsigned int layers);
 
 int load_bpf_program(char *path);
 
-unsigned long long get_value(val__t tmp);
+unsigned long long get_value_from_val_t(val__t tmp);
 
 #define BUG_ON(condition) \
     do                    \

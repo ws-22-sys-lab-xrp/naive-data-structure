@@ -12,7 +12,7 @@
 
 static void print_query_results(struct RangeQuery *query)
 {
-    printf("Range Query ends in %ld\n", query->range_end);
+    printf("Range Query ends in %ld\n", query->range_end - 1);
     if (query->agg_op == AGG_NONE)
     {
         char buf_v[sizeof(val__t) + 1] = {0};
@@ -26,7 +26,6 @@ static void print_query_results(struct RangeQuery *query)
                 ++trimmed_v;
             }
             fprintf(stdout, "value: %s\n", trimmed_v);
-            fprintf(stdout, "key: %d\n", *trimmed_v);
         }
     }
     else if (query->agg_op == AGG_SUM)
@@ -45,12 +44,7 @@ static void print_query_results(struct RangeQuery *query)
     }
     else if (query->agg_op == AGG_PUSH)
     {
-        unsigned long long ans[query->len];
-        for (int i = 0; i < query->len; i++)
-        {
-            ans[i] = get_value(query->kv[i].value);
-        }
-        return ans;
+        // TODO
     }
     else if (query->agg_op == AGG_ADDTOSET)
     {
@@ -209,19 +203,13 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                 checked_pread(db_fd, scratch, BLK_SIZE, (long)value_base(ptr));
                 /* What we do next depends on the type of opp we're doing */
 
-                // TODO: not unsigned long long int or uint64_t
-                // TODO: we need to find one way to transfer value
-                uint64_t tmp = 0;
-                // memcpy(&tmp, scratch + value_offset(ptr), sizeof(val__t));
-                printf("current value: %llu\n", tmp);
-
                 val__t tmp;
                 memcpy(tmp, scratch + value_offset(ptr), sizeof(val__t));
-                unsigned long long tmp_value = get_value(tmp);
+                unsigned long long tmp_value = get_value_from_val_t(tmp);
 
                 // char buf_v[sizeof(val__t) + 1] = {0};
                 // buf_v[sizeof(val__t)] = '\0';
-                // memcpy(buf_v, tmp_value, sizeof(val__t));
+                // memcpy(buf_v, tmp, sizeof(val__t));
                 // char *trimmed_v = buf_v;
                 // while (isspace(*trimmed_v))
                 // {
@@ -233,12 +221,12 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                 {
                     memcpy(query->kv[query->len].value, scratch + value_offset(ptr), sizeof(val__t));
                     query->kv[query->len].key = node->key[i];
-                    printf("The value is %llu\n", tmp_value);
                     query->len += 1;
                 }
                 else if (query->agg_op == AGG_SUM)
                 {
                     query->agg_value += tmp_value;
+                    // printf("current value: %llu\n", tmp_value);
                 }
                 else if (query->agg_op == AGG_MAX)
                 {
@@ -251,9 +239,7 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                 }
                 else if (query->agg_op == AGG_PUSH)
                 {
-                    memcpy(query->kv[query->len].value, scratch + value_offset(ptr), sizeof(val__t));
-                    query->kv[query->len].key = node->key[i];
-                    query->len += 1;
+                    // TODO
                 }
                 else if (query->agg_op == AGG_ADDTOSET)
                 {

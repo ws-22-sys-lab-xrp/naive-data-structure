@@ -6,7 +6,6 @@
 #include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
 #include "simplekvspec.h"
-#include <math.h>
 
 #ifndef NULL
 #define NULL 0
@@ -16,6 +15,13 @@
 #define KEY_MASK (RNG_KEYS - 1)
 
 char LICENSE[] SEC("license") = "GPL";
+
+// TODO: need to add strtol
+unsigned long long get_value_from_val_t(val__t tmp)
+{
+    unsigned long value = strtol(tmp, NULL, 10);
+    return (unsigned long long)value;
+}
 
 static __inline ptr__t nxt_node(unsigned long key, Node *node)
 {
@@ -128,6 +134,10 @@ static __inline unsigned int process_value(struct bpf_xrp *context, struct Range
     unsigned int *i = &query->_node_key_ix;
     unsigned long offset = value_offset(decode(query->_current_node.ptr[*i & KEY_MASK]));
 
+    val__t tmp;
+    memcpy(tmp, context->data + offset, sizeof(val__t));
+    unsigned long long tmp_value = get_value_from_val_t(tmp);
+
     if (query->agg_op == AGG_NONE)
     {
         memcpy(query->kv[query->len & KEY_MASK].value, context->data + offset, sizeof(val__t));
@@ -135,15 +145,15 @@ static __inline unsigned int process_value(struct bpf_xrp *context, struct Range
     }
     else if (query->agg_op == AGG_SUM)
     {
-        query->agg_value += *(long *)(context->data + offset);
+        query->agg_value += tmp_value;
     }
     else if (query->agg_op == AGG_MAX)
     {
-        query->agg_value = (query->agg_value > *(long *)(context->data + offset)) ? query->agg_value : *(long *)(context->data + offset);
+        query->agg_value = (query->agg_value > tmp_value) ? query->agg_value : tmp_value;
     }
     else if (query->agg_op == AGG_AVG)
     {
-        query->agg_value += *(long *)(context->data + offset);
+        query->agg_value += tmp_value;
         query->len += 1;
     }
 

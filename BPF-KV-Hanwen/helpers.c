@@ -167,16 +167,29 @@ int load_bpf_program(char *path)
     return progfd;
 }
 
-unsigned long long get_value(val__t tmp)
+#define TOLOWER(x) ((x) | 0x20)
+#define isxdigit(c) (('0' <= (c) && (c) <= '9') || ('a' <= (c) && (c) <= 'f') || ('A' <= (c) && (c) <= 'F'))
+
+#define isdigit(c) ('0' <= (c) && (c) <= '9')
+
+unsigned long strtoul_me(const char *cp, char **endp, unsigned int base)
 {
-    unsigned long long result = 0;
-    for (int i = 0; i < 64; i++)
+    unsigned long result = 0, value;
+    while (isxdigit(*cp) &&
+           (value = isdigit(*cp) ? *cp - '0' : TOLOWER(*cp) - 'a' + 10) < base)
     {
-        if (tmp[i] == 0 || tmp[i] == '\0')
-        {
-            break;
-        }
-        result = result * 10 + tmp[i] - '0';
+        result = result * base + value;
+        cp++;
     }
+    if (endp)
+        *endp = (char *)cp;
     return result;
+}
+
+unsigned long long get_value_from_val_t(val__t tmp)
+{
+    unsigned long value = strtol(tmp, NULL, 10);
+    // unsigned long value = strtoul_me(tmp, NULL, 10);
+    printf("Current value: %lu\n", value);
+    return (unsigned long long)value;
 }
