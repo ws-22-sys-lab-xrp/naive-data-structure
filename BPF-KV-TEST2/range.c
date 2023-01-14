@@ -59,12 +59,12 @@ static void print_query_results(int argc, char *argv[],struct RangeQuery *query)
         int rows = sizeof(query->whole_list) / sizeof(query->whole_list[0]);
         int cols = sizeof(query->whole_list[0]) / sizeof(unsigned char);
 
-        int new_rows = 1;
+        int new_rows = 0;
         for (int i = 0; i < rows; i++) {
-            int is_empty = 1;
+            int is_empty = 0;
             for (int j = 0; j < cols; j++) {
-                if ((query->whole_list[i][j] == '\0') && (query->whole_list[i][j+1] == '\0')) {
-                    is_empty = 0;
+                if ((query->whole_list[i][0] == '\0') && (query->whole_list[i][1] == '\0')) {
+                    is_empty = 1;
                     break;
                 }
             }
@@ -89,12 +89,12 @@ static void print_query_results(int argc, char *argv[],struct RangeQuery *query)
         int rows = sizeof(query->whole_list) / sizeof(query->whole_list[0]);
         int cols = sizeof(query->whole_list[0]) / sizeof(unsigned char);
 
-        int new_rows = 1;
+        int new_rows = 0;
         for (int i = 0; i < rows; i++) {
-            int is_empty = 1;
+            int is_empty = 0;
             for (int j = 0; j < cols; j++) {
-                if ((query->whole_list[i][j] == '\0') && (query->whole_list[i][j+1] == '\0')) {
-                    is_empty = 0;
+                if ((query->whole_list[i][0] == '\0') && (query->whole_list[i][1] == '\0')) {
+                    is_empty = 1;
                     break;
                 }
             }
