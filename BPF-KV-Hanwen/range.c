@@ -15,6 +15,7 @@ static void print_query_results(struct RangeQuery *query)
     printf("Range Query ends in %ld\n", query->range_end);
     if (query->agg_op == AGG_NONE)
     {
+
         char buf_v[sizeof(val__t) + 1] = {0};
         buf_v[sizeof(val__t)] = '\0';
         for (int i = 0; i < query->len; ++i)
@@ -45,16 +46,21 @@ static void print_query_results(struct RangeQuery *query)
     }
     else if (query->agg_op == AGG_PUSH)
     {
-        unsigned long long ans[query->len];
-        for (int i = 0; i < query->len; i++)
-        {
-            ans[i] = get_value(query->kv[i].value);
-        }
-        return ans;
+        unsigned char buf_v[1000][sizeof(val__t) + 1] = {0};
+        buf_v[1000][sizeof(val__t)] = '\0';
+      
+        memcpy(buf_v[ra.query], query->whole_list[ra.query], sizeof(val__t));
+        char *trimmed_v = buf_v[ra.query];
+        fprintf(stdout, "value: %s\n", trimmed_v);
     }
     else if (query->agg_op == AGG_ADDTOSET)
     {
-        // TODO
+        unsigned char buf_v[1000][sizeof(val__t) + 1] = {0};
+        buf_v[1000][sizeof(val__t)] = '\0';
+      
+        memcpy(buf_v[ra.query], query->whole_list[ra.query], sizeof(val__t));
+        char *trimmed_v = buf_v[ra.query];
+        fprintf(stdout, "value: %s\n", trimmed_v);
     }
 }
 
@@ -215,49 +221,75 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                 // memcpy(&tmp, scratch + value_offset(ptr), sizeof(val__t));
                 printf("current value: %llu\n", tmp);
 
-                val__t tmp;
-                memcpy(tmp, scratch + value_offset(ptr), sizeof(val__t));
-                unsigned long long tmp_value = get_value(tmp);
+                val__t tmp_value;
+                char buf_v[sizeof(val__t) + 1] = {0};
+                buf_v[sizeof(val__t)] = '\0';
+                memcpy(tmp_value, scratch + value_offset(ptr), sizeof(val__t));
+                memcpy(buf_v, tmp_value, sizeof(val__t));
 
-                // char buf_v[sizeof(val__t) + 1] = {0};
-                // buf_v[sizeof(val__t)] = '\0';
-                // memcpy(buf_v, tmp_value, sizeof(val__t));
-                // char *trimmed_v = buf_v;
-                // while (isspace(*trimmed_v))
-                // {
-                //     ++trimmed_v;
-                // }
-                // fprintf(stdout, "tmp_value: %s\n", trimmed_v);
+                char *trimmed_v = buf_v;
+                while (isspace(*trimmed_v))
+                {
+                    ++trimmed_v;
+                }
+                fprintf(stdout, "tmp_value: %s\n", trimmed_v);
 
                 if (query->agg_op == AGG_NONE)
                 {
                     memcpy(query->kv[query->len].value, scratch + value_offset(ptr), sizeof(val__t));
                     query->kv[query->len].key = node->key[i];
-                    printf("The value is %llu\n", tmp_value);
+                    // TODO: can not run
+                    // printf("key: %lu, value: %s", query->kv[query->len].value, query->kv[query->len].key);
                     query->len += 1;
                 }
                 else if (query->agg_op == AGG_SUM)
                 {
-                    query->agg_value += tmp_value;
+                    query->agg_value += *(unsigned long long int *)(scratch + value_offset(ptr));
                 }
                 else if (query->agg_op == AGG_MAX)
                 {
-                    query->agg_value = (query->agg_value > tmp_value) ? query->agg_value : tmp_value;
+                    unsigned long long int tmp = *(unsigned long long int *)(scratch + value_offset(ptr));
+                    query->agg_value = (query->agg_value > tmp) ? query->agg_value : tmp;
                 }
                 else if (query->agg_op == AGG_AVG)
                 {
-                    query->agg_value += tmp_value;
+                    query->agg_value += *(unsigned long long int *)(scratch + value_offset(ptr));
                     query->len += 1;
                 }
                 else if (query->agg_op == AGG_PUSH)
                 {
-                    memcpy(query->kv[query->len].value, scratch + value_offset(ptr), sizeof(val__t));
-                    query->kv[query->len].key = node->key[i];
-                    query->len += 1;
+                    //TODO
+                    if ((query->len)  < 1000)
+                        {
+                        memcpy(query->whole_list[query->len], scratch + value_offset(ptr), sizeof(val__t));
+                        query->len += 1;
+                        }
+                    else
+                    {
+                        fprintf(stderr, "query too large\n");
+                    }
+
                 }
                 else if (query->agg_op == AGG_ADDTOSET)
                 {
-                    // TODO
+                    query->Flag = false
+                    if ((query->len) < 1000)
+                        {
+                            for (int i = 0; i < (query->len - 1); ++i)
+                            {
+                                if (*(long*)query->whole_list[i] == *(long*)whole_list[query->len])
+                                    query->Flag = true
+                            }
+                            if ((query->Flag == false)&&((query->len) < 1000))
+                                {
+                                memcpy(query->whole_list[query->len], scratch + value_offset(ptr), sizeof(val__t));
+                                query->len += 1;
+                                }
+                        }
+                    else
+                    {
+                        fprintf(stderr, "query too large\n");
+                    }
                 }
             }
         }

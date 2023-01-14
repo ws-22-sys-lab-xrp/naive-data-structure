@@ -4,3 +4,5 @@
 linux-xrp/
 skiplist/skiplist.dat
 simplekv
+.history/
+.vscode/

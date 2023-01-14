@@ -125,7 +125,7 @@ static struct argp_option range_opts[] = {
         { "sum", RANGE_SUM_KEY, 0, 0, "Sum the first 8 bytes of each value instead of returning them."},
         {"max", RANGE_MAX_KEY, 0, 0, "Return the maximum the value"},
         {"avg", RANGE_AVG_KEY, 0, 0, "Return the average of the values"},
-        {"push", PUSH_KEY, 0, 0, "Add values to an array without judging whether there are duplicate values"},
+        {"push", PUSH_KEY, "QUERY", 0, "Add values to an array without judging whether there are duplicate values"},
         {"addToSet", ADDTOSET_KEY, 0, 0, "Adding values to an array will determine whether there are duplicate values."},
         { 0 }
 };
@@ -190,6 +190,11 @@ static int _parse_range_opts(int key, char *arg, struct argp_state *state) {
             break;
 
         case PUSH_KEY:
+            char *endptr = NULL;
+            st->query = strtol(arg, &endptr, 10);
+            if ((endptr != NULL && *endptr != '\0') || st->query < 0) {
+                argp_error(state, "invalid number of query");
+            }
             st->agg_op = AGG_PUSH;
             break;
 
