@@ -59,11 +59,11 @@ static void print_query_results(struct RangeQuery *query)
     }
     else if (query->agg_op == AGG_PUSH)
     {
-        //TODO
+        // TODO
     }
     else if (query->agg_op == AGG_ADDTOSET)
     {
-        //TODO
+        // TODO
     }
 }
 
@@ -224,48 +224,47 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                 // memcpy(&tmp, scratch + value_offset(ptr), sizeof(val__t));
                 printf("current value: %llu\n", tmp);
 
-                val__t tmp_value;
-                char buf_v[sizeof(val__t) + 1] = {0};
-                buf_v[sizeof(val__t)] = '\0';
-                memcpy(tmp_value, scratch + value_offset(ptr), sizeof(val__t));
-                memcpy(buf_v, tmp_value, sizeof(val__t));
+                val__t tmp;
+                memcpy(tmp, scratch + value_offset(ptr), sizeof(val__t));
+                unsigned long long tmp_value = get_value(tmp);
 
-                char *trimmed_v = buf_v;
-                while (isspace(*trimmed_v))
-                {
-                    ++trimmed_v;
-                }
-                fprintf(stdout, "tmp_value: %s\n", trimmed_v);
+                // char buf_v[sizeof(val__t) + 1] = {0};
+                // buf_v[sizeof(val__t)] = '\0';
+                // memcpy(buf_v, tmp_value, sizeof(val__t));
+                // char *trimmed_v = buf_v;
+                // while (isspace(*trimmed_v))
+                // {
+                //     ++trimmed_v;
+                // }
+                // fprintf(stdout, "tmp_value: %s\n", trimmed_v);
 
                 if (query->agg_op == AGG_NONE)
                 {
                     memcpy(query->kv[query->len].value, scratch + value_offset(ptr), sizeof(val__t));
                     query->kv[query->len].key = node->key[i];
-                    // TODO: can not run
-                    // printf("key: %lu, value: %s", query->kv[query->len].value, query->kv[query->len].key);
+                    printf("The value is %llu\n", tmp_value);
                     query->len += 1;
                 }
                 else if (query->agg_op == AGG_SUM)
                 {
-                    query->agg_value += *(unsigned long long int *)(scratch + value_offset(ptr));
+                    query->agg_value += tmp_value;
                 }
                 else if (query->agg_op == AGG_MAX)
                 {
-                    unsigned long long int tmp = *(unsigned long long int *)(scratch + value_offset(ptr));
-                    query->agg_value = (query->agg_value > tmp) ? query->agg_value : tmp;
+                    query->agg_value = (query->agg_value > tmp_value) ? query->agg_value : tmp_value;
                 }
                 else if (query->agg_op == AGG_AVG)
                 {
-                    query->agg_value += *(unsigned long long int *)(scratch + value_offset(ptr));
+                    query->agg_value += tmp_value;
                     query->len += 1;
                 }
                 else if (query->agg_op == AGG_PUSH)
                 {
-                    //TODO
+                    // TODO
                 }
                 else if (query->agg_op == AGG_ADDTOSET)
                 {
-                    //TODO
+                    // TODO
                 }
             }
         }

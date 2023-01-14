@@ -19,9 +19,9 @@
 #define SYS_READ_XRP 450
 
 #define NS_PER_SEC 1000000000
-#define US_PER_NS  1000
+#define US_PER_NS 1000
 
-#define aligned_alloca(align, size)     (((uintptr_t) alloca((size) + (align) - 1) + ((align) - 1)) & ~ (uintptr_t) ((align) - 1));
+#define aligned_alloca(align, size) (((uintptr_t)alloca((size) + (align)-1) + ((align)-1)) & ~(uintptr_t)((align)-1));
 
 long lookup_bpf(int db_fd, int bpf_fd, struct Query *query, ptr__t index_offset);
 
@@ -34,22 +34,26 @@ int key_exists(unsigned long key, Node const *node);
 int _get_leaf_containing(int database_fd, key__t key, Node *node, ptr__t index_offset, ptr__t *node_offset);
 int get_leaf_containing(int database_fd, key__t key, Node *node, ptr__t index_offset);
 
-static inline long strtol_or_exit(char *str, char *fail_msg) {
+static inline long strtol_or_exit(char *str, char *fail_msg)
+{
     char *endptr = NULL;
     errno = 0;
     long result = strtol(str, &endptr, 10);
-    if ((endptr != NULL && *endptr != '\0') || errno != 0) {
+    if ((endptr != NULL && *endptr != '\0') || errno != 0)
+    {
         fprintf(stderr, "%s", fail_msg);
         exit(1);
     }
     return result;
 }
 
-static inline unsigned long strtoul_or_exit(char *str, char *fail_msg) {
+static inline unsigned long strtoul_or_exit(char *str, char *fail_msg)
+{
     char *endptr = NULL;
     errno = 0;
     unsigned long result = strtoul(str, &endptr, 10);
-    if ((endptr != NULL && *endptr != '\0') || errno != 0) {
+    if ((endptr != NULL && *endptr != '\0') || errno != 0)
+    {
         fprintf(stderr, "%s", fail_msg);
         exit(1);
     }
@@ -62,10 +66,13 @@ long calculate_max_key(unsigned int layers);
 
 int load_bpf_program(char *path);
 
-#define BUG_ON(condition)   \
-    do {                    \
-        if (condition)      \
-            abort();        \
+unsigned long long get_value(val__t tmp);
+
+#define BUG_ON(condition) \
+    do                    \
+    {                     \
+        if (condition)    \
+            abort();      \
     } while (0)
 
 #endif /* HELPERS_H */
