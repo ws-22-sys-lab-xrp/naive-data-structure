@@ -12,27 +12,13 @@
 
 static void print_query_results(struct RangeQuery *query)
 {
-    // TODO: the starts finally = ends
-    // printf("Range Query starts from %ld to %ld\n", query->range_begin, query->range_end);
     printf("Range Query ends in %ld\n", query->range_end);
     if (query->agg_op == AGG_NONE)
     {
-        char buf_t[sizeof(key__t) + 1] = {0};
-        buf_t[sizeof(key__t)] = '\0';
-
         char buf_v[sizeof(val__t) + 1] = {0};
         buf_v[sizeof(val__t)] = '\0';
         for (int i = 0; i < query->len; ++i)
         {
-            // TODO: investigate how to print key
-            // memcpy(buf_t, query->kv[i].key, sizeof(key__t));
-            // char *trimmed_k = buf_t;
-            // while (isspace(*trimmed_k))
-            // {
-            //     ++trimmed_k;
-            // }
-            // fprintf(stdout, "key: %s\t", trimmed_k);
-
             memcpy(buf_v, query->kv[i].value, sizeof(val__t));
             char *trimmed_v = buf_v;
             while (isspace(*trimmed_v))
@@ -59,7 +45,12 @@ static void print_query_results(struct RangeQuery *query)
     }
     else if (query->agg_op == AGG_PUSH)
     {
-        // TODO
+        unsigned long long ans[query->len];
+        for (int i = 0; i < query->len; i++)
+        {
+            ans[i] = get_value(query->kv[i].value);
+        }
+        return ans;
     }
     else if (query->agg_op == AGG_ADDTOSET)
     {
@@ -260,7 +251,9 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                 }
                 else if (query->agg_op == AGG_PUSH)
                 {
-                    // TODO
+                    memcpy(query->kv[query->len].value, scratch + value_offset(ptr), sizeof(val__t));
+                    query->kv[query->len].key = node->key[i];
+                    query->len += 1;
                 }
                 else if (query->agg_op == AGG_ADDTOSET)
                 {
