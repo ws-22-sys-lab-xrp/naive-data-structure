@@ -148,29 +148,29 @@ static __inline unsigned int process_value(struct bpf_xrp *context, struct Range
     }
     else if (query->agg_op == AGG_PUSH)
     {
-        if ((query->len)  < 10)
+        if ((query->len& KEY_MASK)  < 10)
         {
-            memcpy(query->whole_list[query->len], context->data + offset, sizeof(val__t));
+            memcpy(query->whole_list[query->len & KEY_MASK], context->data + offset, sizeof(val__t));
             query->len += 1;
-        }
+        }}
     }
     else if (query->agg_op == AGG_ADDTOSET)
     {
         query->Flag = 0;
-        if ((query->len) < 10)
+        if ((query->len& KEY_MASK) < 10)
         {
-            for (int i = 0; i < (query->len - 1); ++i)
+            for (int i = 0; i < ((query->len& KEY_MASK) - 1); ++i)
             {
-                if (*(long*)query->whole_list[i] == *(long*)(query->whole_list[query->len]))
+                if (*(long*)query->whole_list[i] == *(long*)(query->whole_list[query->len& KEY_MASK]))
                     query->Flag += 1;
             }
-                if ((query->Flag == 0)&&((query->len) < 10))
+                if ((query->Flag == 0)&&((query->len& KEY_MASK) < 10))
             {
-                memcpy(query->whole_list[query->len], context->data + offset, sizeof(val__t));
+                memcpy(query->whole_list[query->len& KEY_MASK], context->data + offset, sizeof(val__t));
                 query->len += 1;
             }
         }
-    }
+    
 
     /* TODO: This should be incremented, but not doing so does not affect correctness.
      *   For some reason, if we do increment, the verifier complains in `process_leaf` about
