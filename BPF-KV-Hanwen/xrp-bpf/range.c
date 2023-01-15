@@ -16,6 +16,24 @@
 
 char LICENSE[] SEC("license") = "GPL";
 
+static __inline unsigned long long get_value_from_val_t(val__t tmp)
+{
+    unsigned long long result = 0;
+    for (int i = 0; i < 64; i++)
+    {
+        if (tmp[i] == 0 || tmp[i] == '\0' || tmp[i] == ' ')
+        {
+            if (result != 0)
+            {
+                break;
+            }
+            continue;
+        }
+        result = result * 10 + tmp[i] - '0';
+    }
+    return result;
+}
+
 static __inline ptr__t nxt_node(unsigned long key, Node *node)
 {
     /* Safety: NULL is never passed for node, but mr. verifier doesn't know that */
