@@ -148,6 +148,7 @@ static __inline unsigned int process_value(struct bpf_xrp *context, struct Range
     val__t tmp;
     memcpy(tmp, context->data + offset, sizeof(val__t));
     unsigned long long tmp_value = get_value_from_val_t(tmp);
+    bpf_printk("welcome kernel\n");
 
     if (query->agg_op == AGG_NONE)
     {
