@@ -6,7 +6,6 @@
 #include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
 #include "simplekvspec.h"
-#include <math.h>
 
 #ifndef NULL
 #define NULL 0
@@ -136,15 +135,6 @@ static __inline unsigned int process_value(struct bpf_xrp *context, struct Range
     else if (query->agg_op == AGG_SUM)
     {
         query->agg_value += *(long *)(context->data + offset);
-    }
-    else if (query->agg_op == AGG_MAX)
-    {
-        query->agg_value = (query->agg_value > *(long *)(context->data + offset)) ? query->agg_value : *(long *)(context->data + offset);
-    }
-    else if (query->agg_op == AGG_AVG)
-    {
-        query->agg_value += *(long *)(context->data + offset);
-        query->len += 1;
     }
 
     /* TODO: This should be incremented, but not doing so does not affect correctness.
