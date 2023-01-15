@@ -159,7 +159,7 @@ struct RangeQuery {
     unsigned int _node_key_ix;
     Node _current_node;
 
-    unsigned char whole_list[10][64];//not sure
+    unsigned char whole_list[32][64];//not sure
     int Flag;
 };
 

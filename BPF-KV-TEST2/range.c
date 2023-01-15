@@ -49,12 +49,12 @@ static void print_query_results(int argc, char *argv[],struct RangeQuery *query)
     }
     else if (query->agg_op == AGG_PUSH)
     {
-        if ((query->len) > 10)
+        if ((query->len) > 32)
         {
             fprintf(stderr, "query too large\n");
         }
-        unsigned char buf_v[10][sizeof(val__t) + 1] = {0};
-        buf_v[10][sizeof(val__t)] = '\0';
+        unsigned char buf_v[32][sizeof(val__t) + 1] = {0};
+        buf_v[32][sizeof(val__t)] = '\0';
       
         memcpy(buf_v[ra.query-1], query->whole_list[ra.query-1], sizeof(val__t));
         unsigned char *trimmed_v = buf_v[ra.query-1];
@@ -83,12 +83,12 @@ static void print_query_results(int argc, char *argv[],struct RangeQuery *query)
     }
     else if (query->agg_op == AGG_ADDTOSET)
     {
-        if ((query->len) > 10)
+        if ((query->len) > 32)
         {
             fprintf(stderr, "query too large\n");
         }
-        unsigned char buf_v[10][sizeof(val__t) + 1] = {0};
-        buf_v[10][sizeof(val__t)] = '\0';
+        unsigned char buf_v[32][sizeof(val__t) + 1] = {0};
+        buf_v[32][sizeof(val__t)] = '\0';
       
         memcpy(buf_v[ra.query-1], query->whole_list[ra.query-1], sizeof(val__t));
         unsigned char *trimmed_v = buf_v[ra.query-1];
@@ -291,7 +291,7 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                 }
                 else if (query->agg_op == AGG_PUSH)
                 {
-                    if ((query->len)  < 10)
+                    if ((query->len)  < 32)
                         {
                         memcpy(query->whole_list[query->len], scratch + value_offset(ptr), sizeof(val__t));
                         query->len += 1;
@@ -300,7 +300,7 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                 else if (query->agg_op == AGG_ADDTOSET)
                 {
                     query->Flag = 0;
-                    if ((query->len) < 10)
+                    if ((query->len) < 32)
                         {
                             for (int i = 0; i < (query->len - 1); ++i)
                             {
