@@ -37,7 +37,8 @@ unsigned int easylist(struct bpf_xrp *context)
         struct MaybeValue *mv = &query->values[0];
         mv->found = 1;
         // Saving the result to context->date
-        memcpy(&(mv->value), context->data, sizeof(int));
+        // memcpy(&(mv->value), context->data, sizeof(int));
+        mv->value=value;
     }
 
     // Case 2 - Continue Processing
