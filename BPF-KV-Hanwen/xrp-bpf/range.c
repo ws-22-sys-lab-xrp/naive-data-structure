@@ -147,7 +147,7 @@ static __inline unsigned int process_value(struct bpf_xrp *context, struct Range
 
     val__t tmp;
     memcpy(tmp, context->data + offset, sizeof(val__t));
-    unsigned long long tmp_value = _get_value_from_val_t(tmp);
+    unsigned long long tmp_value = get_value_from_val_t(tmp);
 
     if (query->agg_op == AGG_NONE)
     {
@@ -156,7 +156,7 @@ static __inline unsigned int process_value(struct bpf_xrp *context, struct Range
     }
     else if (query->agg_op == AGG_SUM)
     {
-        query->agg_value += *(long *)(context->data + offset);
+        query->agg_value += tmp_value;
     }
 
     /* TODO: This should be incremented, but not doing so does not affect correctness.
