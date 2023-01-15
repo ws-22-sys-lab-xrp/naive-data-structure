@@ -158,6 +158,15 @@ static __inline unsigned int process_value(struct bpf_xrp *context, struct Range
     {
         query->agg_value += tmp_value;
     }
+    else if (query->agg_op == AGG_MAX)
+    {
+        query->agg_value = (query->agg_value > tmp_value) ? query->agg_value : tmp_value;
+    }
+    else if (query->agg_op == AGG_AVG)
+    {
+        query->agg_value += tmp_value;
+        query->len += 1;
+    }
 
     /* TODO: This should be incremented, but not doing so does not affect correctness.
      *   For some reason, if we do increment, the verifier complains in `process_leaf` about
