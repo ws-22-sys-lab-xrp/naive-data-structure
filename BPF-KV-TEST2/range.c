@@ -49,6 +49,10 @@ static void print_query_results(int argc, char *argv[],struct RangeQuery *query)
     }
     else if (query->agg_op == AGG_PUSH)
     {
+        if ((query->len) > 10)
+        {
+            fprintf(stderr, "query too large\n");
+        }
         unsigned char buf_v[10][sizeof(val__t) + 1] = {0};
         buf_v[10][sizeof(val__t)] = '\0';
       
@@ -79,6 +83,10 @@ static void print_query_results(int argc, char *argv[],struct RangeQuery *query)
     }
     else if (query->agg_op == AGG_ADDTOSET)
     {
+        if ((query->len) > 10)
+        {
+            fprintf(stderr, "query too large\n");
+        }
         unsigned char buf_v[10][sizeof(val__t) + 1] = {0};
         buf_v[10][sizeof(val__t)] = '\0';
       
@@ -260,30 +268,10 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                 checked_pread(db_fd, scratch, BLK_SIZE, (long)value_base(ptr));
                 /* What we do next depends on the type of opp we're doing */
 
-                // TODO: not unsigned long long int or uint64_t
-                // TODO: we need to find one way to transfer value
-                uint64_t tmp = 0;
-                // memcpy(&tmp, scratch + value_offset(ptr), sizeof(val__t));
-                // printf("current value: %lu\n", tmp);
-
-                val__t tmp_value;
-                char buf_v[sizeof(val__t) + 1] = {0};
-                buf_v[sizeof(val__t)] = '\0';
-                memcpy(tmp_value, scratch + value_offset(ptr), sizeof(val__t));
-                memcpy(buf_v, tmp_value, sizeof(val__t));
-
-                char *trimmed_v = buf_v;
-                while (isspace(*trimmed_v))
-                {
-                    ++trimmed_v;
-                }
-                // fprintf(stdout, "tmp_value: %s\n", trimmed_v);
-
                 if (query->agg_op == AGG_NONE)
                 {
                     memcpy(query->kv[query->len].value, scratch + value_offset(ptr), sizeof(val__t));
                     query->kv[query->len].key = node->key[i];
-                    // TODO: can not run
                     // printf("key: %lu, value: %s", query->kv[query->len].value, query->kv[query->len].key);
                     query->len += 1;
                 }
@@ -308,11 +296,6 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                         memcpy(query->whole_list[query->len], scratch + value_offset(ptr), sizeof(val__t));
                         query->len += 1;
                         }
-                    else
-                    {
-                        fprintf(stderr, "query too large\n");
-                    }
-
                 }
                 else if (query->agg_op == AGG_ADDTOSET)
                 {
@@ -330,10 +313,6 @@ int submit_range_query(struct RangeQuery *query, int db_fd, int use_xrp, int bpf
                                 query->len += 1;
                                 }
                         }
-                    else
-                    {
-                        fprintf(stderr, "query too large\n");
-                    }
                 }
             }
         }

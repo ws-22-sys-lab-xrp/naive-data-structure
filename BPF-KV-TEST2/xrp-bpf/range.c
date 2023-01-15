@@ -150,14 +150,9 @@ static __inline unsigned int process_value(struct bpf_xrp *context, struct Range
     {
         if ((query->len)  < 10)
         {
-            memcpy(query->whole_list[query->len], scratch + value_offset(ptr), sizeof(val__t));
+            memcpy(query->whole_list[query->len], context->data + offset, sizeof(val__t));
             query->len += 1;
         }
-        else
-        {
-            fprintf(stderr, "query too large\n");
-        }
-
     }
     else if (query->agg_op == AGG_ADDTOSET)
     {
@@ -171,13 +166,9 @@ static __inline unsigned int process_value(struct bpf_xrp *context, struct Range
             }
                 if ((query->Flag == 0)&&((query->len) < 10))
             {
-                memcpy(query->whole_list[query->len], scratch + value_offset(ptr), sizeof(val__t));
+                memcpy(query->whole_list[query->len], context->data + offset, sizeof(val__t));
                 query->len += 1;
             }
-        }
-        else
-        {
-                fprintf(stderr, "query too large\n");
         }
     }
 
