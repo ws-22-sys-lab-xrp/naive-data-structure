@@ -146,6 +146,40 @@ static __inline unsigned int process_value(struct bpf_xrp *context, struct Range
         query->agg_value += *(long *)(context->data + offset);
         query->len += 1;
     }
+    else if (query->agg_op == AGG_PUSH)
+    {
+        if ((query->len)  < 10)
+        {
+            memcpy(query->whole_list[query->len], scratch + value_offset(ptr), sizeof(val__t));
+            query->len += 1;
+        }
+        else
+        {
+            fprintf(stderr, "query too large\n");
+        }
+
+    }
+    else if (query->agg_op == AGG_ADDTOSET)
+    {
+        query->Flag = 0;
+        if ((query->len) < 10)
+        {
+            for (int i = 0; i < (query->len - 1); ++i)
+            {
+                if (*(long*)query->whole_list[i] == *(long*)(query->whole_list[query->len]))
+                    query->Flag += 1;
+            }
+                if ((query->Flag == 0)&&((query->len) < 10))
+            {
+                memcpy(query->whole_list[query->len], scratch + value_offset(ptr), sizeof(val__t));
+                query->len += 1;
+            }
+        }
+        else
+        {
+                fprintf(stderr, "query too large\n");
+        }
+    }
 
     /* TODO: This should be incremented, but not doing so does not affect correctness.
      *   For some reason, if we do increment, the verifier complains in `process_leaf` about
