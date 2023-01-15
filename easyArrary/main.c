@@ -9,7 +9,6 @@
 #define LOAD_MODE 0
 #define RUN_MODE 1
 
-// TODO: create easylist
 // Store in the disk
 
 int get_handler(char *store_path, int flag)
@@ -55,7 +54,7 @@ int load(size_t num, char *store_path)
         array[i] = rand() % num;
     }
 
-    //    TODO:store in the store_path
+    // store in the store_path
     ssize_t write_size = num * sizeof(int);
     ssize_t bytes_writen = write(store_fd, array, write_size);
 
@@ -98,7 +97,6 @@ int operate(char *store_path, int pass_in_index, int num, int iteration)
 
 int process(char *store_path, int pass_in_index, int num, int iteration)
 {
-    // TODO: need to cancel use xrp
     int use_xrp = 1;
 
     int bpf_fd = -1;

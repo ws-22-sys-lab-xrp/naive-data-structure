@@ -22,12 +22,12 @@ unsigned int easylist(struct bpf_xrp *context)
     // int *curr_idx = &query->current_index;
 
     // Fetch the target value
-    // TODO: find out the relating address operations
+    // find out the relating address operations
     unsigned long location = (query->array + current_array_index * EBPF_INT_SIZE);
     int value;
     bpf_probe_read_kernel(&value, sizeof(int), (void *)location);
 
-    // TODO: pass out the new index things - By using context->data
+    // pass out the new index things - By using context->data
     // Case 1 - End Term Processing -> fetch the value
     // Return the value
     if (current_iteration >= query->iteration)
