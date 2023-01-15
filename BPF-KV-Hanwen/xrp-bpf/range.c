@@ -16,24 +16,6 @@
 
 char LICENSE[] SEC("license") = "GPL";
 
-unsigned long long get_value_from_val_t(val__t tmp)
-{
-    unsigned long long result = 0;
-    for (int i = 0; i < 64; i++)
-    {
-        if (tmp[i] == 0 || tmp[i] == '\0' || tmp[i] == ' ')
-        {
-            if (result != 0)
-            {
-                break;
-            }
-            continue;
-        }
-        result = result * 10 + tmp[i] - '0';
-    }
-    return result;
-}
-
 static __inline ptr__t nxt_node(unsigned long key, Node *node)
 {
     /* Safety: NULL is never passed for node, but mr. verifier doesn't know that */
@@ -145,10 +127,6 @@ static __inline unsigned int process_value(struct bpf_xrp *context, struct Range
     unsigned int *i = &query->_node_key_ix;
     unsigned long offset = value_offset(decode(query->_current_node.ptr[*i & KEY_MASK]));
 
-    val__t tmp;
-    memcpy(tmp, context->data + offset, sizeof(val__t));
-    unsigned long long tmp_value = get_value_from_val_t(tmp);
-
     if (query->agg_op == AGG_NONE)
     {
         memcpy(query->kv[query->len & KEY_MASK].value, context->data + offset, sizeof(val__t));
@@ -156,16 +134,7 @@ static __inline unsigned int process_value(struct bpf_xrp *context, struct Range
     }
     else if (query->agg_op == AGG_SUM)
     {
-        query->agg_value += tmp_value;
-    }
-    else if (query->agg_op == AGG_MAX)
-    {
-        query->agg_value = (query->agg_value > tmp_value) ? query->agg_value : tmp_value;
-    }
-    else if (query->agg_op == AGG_AVG)
-    {
-        query->agg_value += tmp_value;
-        query->len += 1;
+        query->agg_value += *(long *)(context->data + offset);
     }
 
     /* TODO: This should be incremented, but not doing so does not affect correctness.
