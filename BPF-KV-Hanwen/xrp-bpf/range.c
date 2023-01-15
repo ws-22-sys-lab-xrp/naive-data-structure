@@ -145,6 +145,10 @@ static __inline unsigned int process_value(struct bpf_xrp *context, struct Range
     unsigned int *i = &query->_node_key_ix;
     unsigned long offset = value_offset(decode(query->_current_node.ptr[*i & KEY_MASK]));
 
+    val__t tmp;
+    memcpy(tmp, context->data + offset, sizeof(val__t));
+    unsigned long long tmp_value = _get_value_from_val_t(tmp);
+
     if (query->agg_op == AGG_NONE)
     {
         memcpy(query->kv[query->len & KEY_MASK].value, context->data + offset, sizeof(val__t));
